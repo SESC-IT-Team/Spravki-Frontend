@@ -1,3 +1,4 @@
+import {useState} from 'react'
 function Certificate({ certificateType, time, status }) {
     return (
       <li className="list-row border-base-content/10 flex items-center justify-between gap-3 border-b py-3 last:border-b-0">
@@ -13,6 +14,9 @@ function Certificate({ certificateType, time, status }) {
   }
   
   export default function UserPage() {
+    const [current, setcurrent]=useState("Стандартная")
+    const [name, setname]=useState("")
+    const [surname, setsurname]=useState("")
     return (
       <div className="min-h-screen bg-base-200 px-4 py-8 sm:px-6">
         <div className="mx-auto w-full max-w-2xl">
@@ -31,13 +35,21 @@ function Certificate({ certificateType, time, status }) {
   
               <fieldset className="fieldset mt-4">
                 <legend className="fieldset-legend text-base font-semibold">Тип справки</legend>
-                <select defaultValue="Стандартная" className="select select-bordered w-full bg-base-100">
+                <select className="select select-bordered w-full bg-base-100" value = {current} onChange = {(event) => setcurrent(event.target.value)}>
                   <option>Стандартная</option>
                   <option>Для военкомата</option>
                   <option>Для налоговой инспекции</option>
                   <option>Для социального фонда</option>
+                  <option>Тест</option>
                 </select>
               </fieldset>
+              {current === "Тест" && (
+                <div className="rounded-box border border-base-300 bg-base-200 p-3">
+                  <div className="mb-2 text-xs opacity-70 uppercase font-semibold"> Данные Для справки </div>
+                  <input className="input w-full" type = "text" placeholder='Имя'/>
+                  <input className="input w-full mt-2" type = "text" placeholder='Фамилия'/>
+                </div>
+              )}
   
               {/* Кнопка заказа справки */}
               <button className="btn btn-primary">
