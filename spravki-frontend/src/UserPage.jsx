@@ -1,4 +1,5 @@
-import {useState} from 'react'
+import { useState } from 'react'
+
 function Certificate({ certificateType, time, status }) {
     return (
       <li className="list-row border-base-content/10 flex items-center justify-between gap-3 border-b py-3 last:border-b-0">
@@ -14,9 +15,8 @@ function Certificate({ certificateType, time, status }) {
   }
   
   export default function UserPage() {
-    const [current, setcurrent]=useState("Стандартная")
-    const [name, setname]=useState("")
-    const [surname, setsurname]=useState("")
+    const [ current, setCurrent ] = useState("Стандартная")
+
     return (
       <div className="min-h-screen bg-base-200 px-4 py-8 sm:px-6">
         <div className="mx-auto w-full max-w-2xl">
@@ -32,10 +32,15 @@ function Certificate({ certificateType, time, status }) {
                   обновится.
                 </p>
               </div>
-  
+
+              {/* Поле для выбора типа справки */}
               <fieldset className="fieldset mt-4">
                 <legend className="fieldset-legend text-base font-semibold">Тип справки</legend>
-                <select className="select select-bordered w-full bg-base-100" value = {current} onChange = {(event) => setcurrent(event.target.value)}>
+                <select
+                  value={current}
+                  onChange={(event) => setCurrent(event.target.value)}
+                  className="select select-bordered w-full bg-base-100"
+                >
                   <option>Стандартная</option>
                   <option>Для военкомата</option>
                   <option>Для налоговой инспекции</option>
@@ -43,26 +48,31 @@ function Certificate({ certificateType, time, status }) {
                   <option>Тест</option>
                 </select>
               </fieldset>
+
+              {/* Поле для ввода данных для справки */}
               {current === "Тест" && (
-                <div className="rounded-box border border-base-300 bg-base-200 p-3">
-                  <div className="mb-2 text-xs opacity-70 uppercase font-semibold"> Данные Для справки </div>
-                  <input className="input w-full" type = "text" placeholder='Имя'/>
-                  <input className="input w-full mt-2" type = "text" placeholder='Фамилия'/>
+                <div className="rounded-box border border-base-300 bg-base-200/40 p-3">
+                  <div className="mb-2 text-xs font-semibold uppercase opacity-70">Данные для справки</div>
+                  <input className="input w-full" type="text" placeholder='Тестовое поле 1'/>
+                  <input className="input w-full mt-2" type="text" placeholder='Тестовое поле 2'/>
                 </div>
-              )}
+                )
+              }
   
               {/* Кнопка заказа справки */}
               <button className="btn btn-primary">
                 Заказать справку
               </button>
-  
+
               <div className="divider my-1" />
-  
+              
+              {/* Заголовок и количество заявок */}
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-semibold">Мои справки</h2>
                 <span className="badge badge-outline badge-primary">4 заявки</span>
               </div>
-  
+
+              {/* Список заявок */}
               <ul className="list rounded-box border border-base-300 bg-base-100 px-4">
                 <Certificate certificateType={"Стандартная"} time={"00.00.0000 — 00:00"} status={1}/>
                 <Certificate certificateType={"Для военкомата"} time={"00.00.0000 — 00:00"} status={1}/>
