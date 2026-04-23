@@ -8,7 +8,7 @@ export default function AdminPageDorm() {
     <div className="min-h-screen bg-base-200 px-4 py-8 sm:px-6">
       <div className="mx-auto w-full max-w-2xl">
         <div className="mb-4 text-center">
-          <h1 className="text-3xl font-bold text-base-content sm:text-4xl">Заказ справок</h1>
+          <h1 className="text-3xl font-bold text-base-content sm:text-4xl">Заявки на выход из общежития</h1>
         </div>
 				<div className="card border border-primary/20 bg-base-100 shadow-xl">
 					<div className="card-body">
