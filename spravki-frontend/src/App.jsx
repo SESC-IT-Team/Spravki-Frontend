@@ -1,8 +1,9 @@
 import UserPage from "./UserPage"
-import AdminPage from "./AdminPage"
+import AdminPage from "./AdminPageTableExample"
+import AdminPageDorm from "./AdminPageDorm"
 
 export default function App() {
   return (
-    <AdminPage />
-  )
+    <UserPage />
+  );
 }
