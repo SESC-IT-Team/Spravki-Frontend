@@ -17,9 +17,13 @@ const certificateTypeMap = Object.fromEntries(
   certificateConfigs.map((certificate) => [certificate.apiType, certificate.label]),
 )
 
-/* Словарь название справки : ее значение в API */
+/* Словарь название справки : запрашиваемые данные */
 const orderFieldsByLabel = Object.fromEntries(
   certificateConfigs.map((certificate) => [certificate.label, certificate.fields]),
+)
+/* Словарь название справки : ее значение в API */
+const orderApiTypeByLabel = Object.fromEntries(
+  certificateConfigs.map((certificate) => [certificate.label, certificate.apiType]),
 )
 
 /* Форматирование даты справки */
@@ -69,7 +73,27 @@ function FormOrder({ OrderType }) {
     </>
   )
 }
-  
+function sendRequest(current) {
+  /* Отправка заявки на справку */
+  async function postRequest() {
+      try {
+        
+        await fetch("http://212.113.98.188:8081/create_order", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            certificate_type: orderApiTypeByLabel[current],
+          })
+        })
+      } catch (error) {
+        console.error("Ошибка при отправке заявки:", error)
+      }
+  }
+  postRequest()
+
+}
 export default function UserPage() {
   const [ current, setCurrent ] = useState("Стандартная")
   const [ orders, setOrders ] = useState([])
@@ -78,7 +102,7 @@ export default function UserPage() {
   useEffect(() => {
     async function fetchOrders() {
       try {
-        const response = await fetch("http://212.113.98.188/get_my_orders", {
+        const response = await fetch("http://212.113.98.188:8081/get_my_orders", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -144,7 +168,7 @@ export default function UserPage() {
             <FormOrder OrderType={current}/>
 
             {/* Кнопка заказа справки */}
-            <button className="btn btn-primary">
+            <button className="btn btn-primary" onClick = {() => sendRequest(current)}>
               Заказать справку
             </button>
 
