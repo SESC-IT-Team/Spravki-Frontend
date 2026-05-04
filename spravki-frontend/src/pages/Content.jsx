@@ -10,7 +10,7 @@ export function CertificateForm({current, setCurrent, orders, sendRequest, depar
       <div className="card-body">
           <div className="rounded-box bg-primary/10 p-4">
             <p className="text-sm leading-relaxed">
-              Выберите нужный тип справки и отправьте заявку. Когда документ будет готов, статус автоматически
+              Выберите нужный тип и отправьте заявку. Когда документ будет готов, статус автоматически
               обновится.
             </p>
           </div>
@@ -34,7 +34,7 @@ export function CertificateForm({current, setCurrent, orders, sendRequest, depar
 
           {/* Кнопка заказа справки */}
           <button className="btn btn-primary" onClick = {() => sendRequest(current)}>
-            Заказать справку
+            Заказать
           </button>
 
           <div className="divider my-1" />

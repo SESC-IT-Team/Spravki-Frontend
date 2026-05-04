@@ -28,7 +28,7 @@ export function CSDPage() {
 export function HostelPage() {
   /* Запаковка в контейнер UI */
   return (
-    <UserPageContainer title="Заказ справок для общежития" department="hostel">
+    <UserPageContainer title="Заявки в общежитие" department="hostel">
       {({ current, setCurrent, orders, sendRequest }) => (
         <HostelForm current={current} setCurrent={setCurrent} 
         orders={orders} sendRequest={sendRequest}/>

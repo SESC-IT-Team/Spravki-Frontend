@@ -1,7 +1,7 @@
 import { Routes, Route } from 'react-router-dom'
-import UserPage from "./pages/UserPage"
+import UserPage from "./oldpages/UserPage"
 import AdminPage from "./AdminPageTableExample"
-import AdminPageDorm from "./pages/AdminPageDorm"
+import AdminPageDorm from "./oldpages/AdminPageDorm"
 import {EducationalPage, CSDPage, HostelPage} from './pages/UserPages'
 
 export default function App() {
