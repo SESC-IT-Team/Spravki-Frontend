@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 
 /* URL API сервера, можно менять в .env файле \*/
-const API_URL = "http://212.113.98.188:8081"; /*import.meta.env.VITE_API_URL*/
+const API_URL = import.meta.env.VITE_API_URL;
 
 /* Основаня инфа о справках */
 const certificateConfigs = [
