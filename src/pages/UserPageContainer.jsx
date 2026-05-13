@@ -9,9 +9,31 @@ const certificateConfigs = [
   { apiType: "militaryregistration", label: "Для военкомата", department: "educational", fields: [] },
   { apiType: "tax", label: "Для налоговой инспекции", department: "educational", fields: [] },
   { apiType: "socialfoundation", label: "Для социального фонда", department: "educational", fields: [] },
-  { apiType: "certificate", label: "Копия аттестата", department: "CSD", fields: [] },
-  { apiType: "extraditiondocuments", label: "Документы о выдаче", department: "CSD", fields: [] },
-  { apiType: "hostel", label: "Общежитие", department: "hostel", fields: ["ФИО Родителя", "ФИО Ученика","Цель"] },
+  { apiType: "certificate", label: "Выдача аттестата", department: "CSD", fields: [
+    { formLabel: "ФИО Ученика", key: "student_full_name", input_type: "text" },
+    { formLabel: "Класс", key: "class", input_type: "text" },
+    { formLabel: "Контактный телефон", key: "contact_phone", input_type: "text" },
+    { formLabel: "Контактный e-mail", key: "contact_email", input_type: "text" },
+    { formLabel: "Нужна ли справка об успеваемости?(Да/Нет)", key: "needs_transcript", input_type: "checkbox" },
+    { formLabel: "Причина выбытия из СУНЦ", key: "reason_for_withdrawal", input_type: "text" }
+  ] },
+  { apiType: "extraditiondocuments", label: "Выдача документов", department: "CSD", fields: [
+    { formLabel: "ФИО Ученика", key: "student_full_name", input_type: "text" },
+    { formLabel: "Класс", key: "class", input_type: "text" },
+    { formLabel: "Контактный телефон", key: "contact_phone", input_type: "text" },
+    { formLabel: "Контактный e-mail", key: "contact_email", input_type: "text" },
+    { formLabel: "Место требования для аттестата", key: "location_for_certificate", input_type: "text" },
+    { formLabel: "Нужна ли справка об успеваемости?(Да/Нет)", key: "needs_transcript", input_type: "checkbox" }
+  ] },
+  { apiType: "hostel", label: "Общежитие", department: "hostel", fields: [
+    { formLabel: "ФИО Родителя", key: "parent_full_name", input_type: "text" },
+    { formLabel: "ФИО Ученика", key: "student_full_name", input_type: "text" },
+    { formLabel: "Цель/Причина", key: "reason_for_stay", input_type: "text" },
+    { formLabel: "Место(Адрес) Пребывания", key: "stay_location", input_type: "text" },
+    { formLabel: "Контактное лицо в месте пребывания(ФИО, телефон)", key: "contact_person", input_type: "text" },
+    { formLabel: "Дата и время выхода", key: "leaving_time", input_type: "datetime-local" },
+    { formLabel: "Дата и время возвращения", key: "returning_time", input_type: "datetime-local" }
+  ] },
 ]
 
 /* Словарь значение справки в API : ее название */
@@ -20,9 +42,7 @@ const certificateTypeMap = Object.fromEntries(
 )
 
 /* Словарь название справки : запрашиваемые данные */
-const orderFieldsByLabel = Object.fromEntries(
-  certificateConfigs.map((certificate) => [certificate.label, certificate.fields]),
-)
+
 /* Словарь название справки : ее значение в API */
 const orderApiTypeByLabel = Object.fromEntries(
   certificateConfigs.map((certificate) => [certificate.label, certificate.apiType]),
@@ -53,29 +73,7 @@ function Order({ OrderType, time, status }) {
   )
 }
 
-function FormOrder({ OrderType }) {
-  return (
-    <>
-      {/* Поле для ввода данных для справки */}
-      {(orderFieldsByLabel[OrderType] ?? []).length > 0 && (
-        <div className="rounded-box border border-base-300 bg-base-200/40 p-3">
-          <div className="mb-2 text-xs font-semibold uppercase opacity-70">Данные для справки</div>
-          {(orderFieldsByLabel[OrderType] ?? []).map((fieldLabel, idx) => (
-            <input
-              key={fieldLabel}
-              className={`input w-full${idx !== 0 ? " mt-2" : ""}`}
-              type="text"
-              placeholder={fieldLabel}
-            />
-          ))}
-    
-        </div>
-        )
-      }
-    </>
-  )
-}
-function sendRequest(current) {
+function sendRequest(current, formData) {
   /* Отправка заявки на справку */
   async function postRequest() {
       try {
@@ -87,6 +85,7 @@ function sendRequest(current) {
           },
           body: JSON.stringify({
             certificate_type: orderApiTypeByLabel[current],
+            data: formData,
           })
         })
       } catch (error) {
@@ -97,10 +96,10 @@ function sendRequest(current) {
 
 }
 /* Экспортируем, чтобы в детях можно было использовать*/
-export { orderFieldsByLabel, Order, FormOrder, formatOrderDate, certificateConfigs }
+export { Order, certificateConfigs }
 
 export default function UserPageContainer({children, title, department}) {
-  const [ current, setCurrent ] = useState("Стандартная")
+  const [ current, setCurrent ] = useState(certificateConfigs.find(certificate => certificate.department === department)?.label ?? "")
   const [ orders, setOrders ] = useState([])
 
   /* Получение списка заявок */
