@@ -27,7 +27,7 @@ const fieldMap = {
   "Класс": "class",
   "Тип": "certificate_type",
   "Контакные данные": "contact_info",
-  "Справка?": "certificate_ready",
+  "Справка?": "needs_certificate",
   "Выход": "leaving_time",
   "Возвращение": "returning_time"
 }
