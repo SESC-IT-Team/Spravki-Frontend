@@ -4,10 +4,9 @@ COPY package*.json ./
 RUN npm ci --ignore-scripts
 COPY . .
 RUN npm run build
-
 FROM node:20-alpine
-RUN npm install -g serve
 WORKDIR /app
+RUN npm install -g serve
 COPY --from=build /app/dist ./dist
 EXPOSE 80
-CMD ["serve", "-s", "dist", "-l", "80", "--no-etag", "--cors"]
+CMD ["serve", "-s", "dist", "-l", "80"]

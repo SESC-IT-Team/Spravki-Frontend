@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import {Link} from "react-router-dom";
 
 const API_URL = import.meta.env.VITE_API_URL;
 const testData = [
@@ -42,6 +43,7 @@ function AdminTable({ data, department }) {
           {tableHeaders[department]?.map((header) => (
             <th key={header}>{header}</th>
           ))}
+          <th>Справка</th>
         </tr>
       </thead>
 
@@ -53,11 +55,14 @@ function AdminTable({ data, department }) {
               {tableHeaders[department]?.map((header) => (
                 <td key={`td-${req.id}-${header}`}>{req[fieldMap[header]]}</td>
               ))}
+              <td>
+                <Link className="btn btn-outline btn-primary" to={req.url}>Скачать</Link>
+              </td>
             </tr>
           ))
         ) : (
           <tr>
-            <td colSpan={tableHeaders[department]?.length} className="text-center py-4">
+            <td colSpan={tableHeaders[department]?.length + 1} className="text-center py-4">
               Нет заявок
             </td>
           </tr>
@@ -99,7 +104,7 @@ export default function AdminPage({ department }) {
 
 return (
   <div className="min-h-screen bg-base-200 px-4 py-8 sm:px-6">
-    <div className="mx-auto w-full max-w-2xl">
+    <div className="mx-auto w-full max-w-4xl">
       <div className="mb-4 text-center">
         <h1 className="text-3xl font-bold text-base-content sm:text-4xl">{mainHeaders[department]}</h1>
       </div>
