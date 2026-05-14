@@ -3,6 +3,7 @@ import { certificateConfigs } from "./configs"
 import Cookies from "js-cookie"
 /* URL API сервера, можно менять в .env файле \*/
 const API_URL = import.meta.env.VITE_SPRAVKI_API_URL;
+const AUTH_FRONTEND_URL = import.meta.env.VITE_AUTH_FRONTEND_URL;
 
 /* Словарь значение справки в API : ее название */
 const certificateTypeMap = Object.fromEntries(
@@ -75,7 +76,7 @@ export default function UserPageContainer({children, title, department}) {
     const token = Cookies.get("accessToken")
     if (!token) {
       const from = encodeURIComponent(window.location.href)
-      window.location.href = `http://localhost:4001/?from=${from}`
+      window.location.href = `${AUTH_FRONTEND_URL}/?from=${from}`
     }
   }, [])
 
