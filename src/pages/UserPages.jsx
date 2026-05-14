@@ -1,10 +1,12 @@
 import UserPageContainer from "./UserPageContainer";
-import {CertificateForm, HostelForm} from "./Content";
+import {CertificateForm} from "./Content";
+
+const AUTH_API_URL = import.meta.env.VITE_AUTH_API_URL;
 
 export function EducationalPage() {
   /* Запаковка в контейнер UI */
   return (
-    <UserPageContainer title="Заказ справок" department="educational">
+    <UserPageContainer title="Учебный отдел" department="educational">
       {({ current, setCurrent, orders, sendRequest, department }) => (
         <CertificateForm current={current} setCurrent={setCurrent}
         orders={orders} sendRequest={sendRequest} department={department}/>
@@ -16,7 +18,7 @@ export function EducationalPage() {
 export function CSDPage() {
   /* Запаковка в контейнер UI */
   return (
-    <UserPageContainer title="Заказ документов" department="CSD">
+    <UserPageContainer title="Отдел конкурсного отбора" department="CSD">
       {({ current, setCurrent, orders, sendRequest, department }) => (
         <CertificateForm current={current} setCurrent={setCurrent} 
         orders={orders} sendRequest={sendRequest} department={department}/>
@@ -28,10 +30,10 @@ export function CSDPage() {
 export function HostelPage() {
   /* Запаковка в контейнер UI */
   return (
-    <UserPageContainer title="Заявки в общежитие" department="hostel">
-      {({ current, setCurrent, orders, sendRequest }) => (
-        <HostelForm current={current} setCurrent={setCurrent} 
-        orders={orders} sendRequest={sendRequest}/>
+    <UserPageContainer title="Общежитие" department="hostel">
+      {({ current, setCurrent, orders, sendRequest, department }) => (
+        <CertificateForm current={current} setCurrent={setCurrent} 
+        orders={orders} sendRequest={sendRequest} department={department}/>
       )}
     </UserPageContainer>
   )

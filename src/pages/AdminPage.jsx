@@ -2,10 +2,11 @@ import { useState, useEffect } from "react";
 import {Link} from "react-router-dom";
 
 const API_URL = import.meta.env.VITE_API_URL;
-const testData = [
+
+/*const testData = [
 {id:2, created_at:"23.02 15:44",full_name:"Иван Петренко", leaving_time:"26.02 05:00", returning_time: "28.02 23:00"},
 {id:1, created_at:"24.02 14:00",full_name:"Петр Иванов", leaving_time:"28.02 15:30", returning_time: "30.03 23:00"}
-];
+];*/
 
 /* Шапки таблиц для разных отделов */
 const tableHeaders = {
@@ -100,7 +101,7 @@ export default function AdminPage({ department }) {
 
     }          
     fetchData();
-  }, [])
+  }, [department])
 
 return (
   <div className="min-h-screen bg-base-200 px-4 py-8 sm:px-6">

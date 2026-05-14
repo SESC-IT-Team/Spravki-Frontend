@@ -1,16 +1,13 @@
 import { useEffect, useState } from "react"
 import { certificateConfigs } from "./configs"
+import Cookies from "js-cookie"
 /* URL API сервера, можно менять в .env файле \*/
-const API_URL = import.meta.env.VITE_API_URL;
-
-/* Основаня инфа о справках */
+const API_URL = import.meta.env.VITE_SPRAVKI_API_URL;
 
 /* Словарь значение справки в API : ее название */
 const certificateTypeMap = Object.fromEntries(
   certificateConfigs.map((certificate) => [certificate.apiType, certificate.label]),
 )
-
-/* Словарь название справки : запрашиваемые данные */
 
 /* Словарь название справки : ее значение в API */
 const orderApiTypeByLabel = Object.fromEntries(
@@ -28,7 +25,7 @@ function formatOrderDate(dateRaw) {
 }
 
 /* Компонент для отображения одной заявки */
-function Order({ OrderType, time, status }) {
+export function Order({ OrderType, time, status }) {
   return (
     <li className="list-row border-base-content/10 flex items-center justify-between gap-3 border-b py-3 last:border-b-0">
       <div className="space-y-1">
@@ -44,42 +41,56 @@ function Order({ OrderType, time, status }) {
 
 function sendRequest(current, formData) {
   /* Отправка заявки на справку */
+  const token = Cookies.get("accessToken")
+
   async function postRequest() {
-      try {
-        
-        await fetch(`${API_URL}/create_order`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            certificate_type: orderApiTypeByLabel[current],
-            data: formData,
-          })
-        })
-      } catch (error) {
-        console.error("Ошибка при отправке заявки:", error)
-      }
+    try {
+      const headers = { "Content-Type": "application/json" }
+      if (token) headers["Authorization"] = `Bearer ${token}`
+
+      await fetch(`${API_URL}/create_order`, {
+        method: "POST",
+        credentials: "include",
+        headers,
+        body: JSON.stringify({
+          certificate_type: orderApiTypeByLabel[current],
+          data: formData,
+        }),
+      })
+    } catch (error) {
+      console.error("Ошибка при отправке заявки:", error)
+    }
   }
+
   postRequest()
 
 }
-/* Экспортируем, чтобы в детях можно было использовать*/
-export { Order, certificateConfigs }
 
 export default function UserPageContainer({children, title, department}) {
   const [ current, setCurrent ] = useState(certificateConfigs.find(certificate => certificate.department === department)?.label ?? "")
   const [ orders, setOrders ] = useState([])
 
+  /* Redirect to auth if no accessToken cookie found */
+  useEffect(() => {
+    const token = Cookies.get("accessToken")
+    if (!token) {
+      const from = encodeURIComponent(window.location.href)
+      window.location.href = `http://localhost:4001/?from=${from}`
+    }
+  }, [])
+
   /* Получение списка заявок */
   useEffect(() => {
     async function fetchOrders() {
       try {
+        const token = Cookies.get("accessToken")
+        const headers = { "Content-Type": "application/json" }
+        if (token) headers["Authorization"] = `Bearer ${token}`
+
         const response = await fetch(`${API_URL}/get_my_orders`, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          credentials: "include",
+          headers,
           body: JSON.stringify({
             department: department,
           }),
@@ -105,19 +116,16 @@ export default function UserPageContainer({children, title, department}) {
     }
 
     fetchOrders()
-  }, [])
+  }, [department])
 
   return (
     <div className="min-h-screen bg-base-200 px-4 py-8 sm:px-6">
       <div className="mx-auto w-full max-w-2xl">
-        <div className="mb-4 text-center">
-          <h1 className="text-3xl font-bold text-base-content sm:text-4xl">{title}</h1>
-        </div>
 
         <div className="card border border-primary/20 bg-base-100 shadow-xl">
           {/* Отрисовка контента */}
           {typeof children === "function"
-            ? children({ current, setCurrent, orders, sendRequest, department })
+            ? children({ current, setCurrent, orders, sendRequest, department, title })
             : children}
         </div>
       </div>

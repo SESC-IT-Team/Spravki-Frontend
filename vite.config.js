@@ -1,22 +1,53 @@
-import { defineConfig } from "vite"
+import { defineConfig, loadEnv } from "vite"
+import { fileURLToPath } from "url"
 import react from "@vitejs/plugin-react"
 import tailwindcss from "@tailwindcss/vite"
 
-export default defineConfig({
-  plugins: [
-    react(),
-    tailwindcss(),
-    {
-      name: 'vite-log-requests',
-      configureServer(server) {
-        server.middlewares.use((req, res, next) => {
-          console.log(`[vite] ${req.method} ${req.url}`)
-          next()
-        })
+const root = fileURLToPath(new URL('.', import.meta.url))
+
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, root)
+  const AUTH_API_URL = env.VITE_AUTH_FRONTEND_URL
+
+  return {
+    plugins: [
+      react(),
+      tailwindcss(),
+      {
+        name: 'vite-log-requests',
+        configureServer(server) {
+          server.middlewares.use((req, res, next) => {
+            console.log(`[vite] ${req.method} ${req.url}`)
+            next()
+          })
+        }
+      }
+    ],
+    server: {
+      host: "0.0.0.0",
+      port: 4000,
+      proxy: {
+        '/api': {
+          target: AUTH_API_URL,
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/api/, '')
+        },
+        '/get_orders': {
+          target: AUTH_API_URL,
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/get_orders/, '')
+        },
+        '/get_my_orders': {
+          target: AUTH_API_URL,
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/get_my_orders/, '')
+        },
+        '/create_order': {
+          target: AUTH_API_URL,
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/create_order/, '')
+        }
       }
     }
-  ],
-  server: {
-    host: "0.0.0.0",
   }
 })
