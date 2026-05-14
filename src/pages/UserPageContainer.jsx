@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { certificateConfigs } from "./configs"
 import Cookies from "js-cookie"
 /* URL API сервера, можно менять в .env файле \*/
-const API_URL = import.meta.env.VITE_SPRAVKI_API_URL;
+const SPRAVKI_API_URL = import.meta.env.VITE_SPRAVKI_API_URL;
+const AUTH_API_URL = import.meta.env.VITE_AUTH_API_URL;
 const AUTH_FRONTEND_URL = import.meta.env.VITE_AUTH_FRONTEND_URL;
 
 /* Словарь значение справки в API : ее название */
@@ -26,9 +27,14 @@ function formatOrderDate(dateRaw) {
 }
 
 /* Компонент для отображения одной заявки */
-export function Order({ OrderType, time, status }) {
+export function Order({ OrderType, time, status, className, style }) {
   return (
-    <li className="list-row border-base-content/10 flex items-center justify-between gap-3 border-b py-3 last:border-b-0">
+    <li
+      className={["list-row border-base-content/10 flex items-center justify-between gap-3 border-b py-3 last:border-b-0", className]
+        .filter(Boolean)
+        .join(" ")}
+      style={style}
+    >
       <div className="space-y-1">
         <div className="text-sm font-semibold">{OrderType}</div>
         <div className="text-xs opacity-60">{time}</div>
@@ -40,63 +46,25 @@ export function Order({ OrderType, time, status }) {
   )
 }
 
-function sendRequest(current, formData) {
-  /* Отправка заявки на справку */
-  const token = Cookies.get("accessToken")
-
-  async function postRequest() {
-    try {
-      const headers = { "Content-Type": "application/json" }
-      if (token) headers["Authorization"] = `Bearer ${token}`
-
-      await fetch(`${API_URL}/create_order`, {
-        method: "POST",
-        credentials: "include",
-        headers,
-        body: JSON.stringify({
-          certificate_type: orderApiTypeByLabel[current],
-          data: formData,
-        }),
-      })
-    } catch (error) {
-      console.error("Ошибка при отправке заявки:", error)
-    }
-  }
-
-  postRequest()
-
-}
-
 export default function UserPageContainer({children, title, department}) {
   const [ current, setCurrent ] = useState(certificateConfigs.find(certificate => certificate.department === department)?.label ?? "")
   const [ orders, setOrders ] = useState([])
 
-  /* Redirect to auth if no accessToken cookie found */
-  useEffect(() => {
-    const token = Cookies.get("accessToken")
-    if (!token) {
-      const from = encodeURIComponent(window.location.href)
-      window.location.href = `${AUTH_FRONTEND_URL}/?from=${from}`
-    }
-  }, [])
+  const fetchOrders = useCallback(async (retried = false) => {
+    try {
+      const token = Cookies.get("accessToken")
+      const headers = { "Content-Type": "application/json" }
+      if (token) headers["Authorization"] = `Bearer ${token}`
 
-  /* Получение списка заявок */
-  useEffect(() => {
-    async function fetchOrders() {
-      try {
-        const token = Cookies.get("accessToken")
-        const headers = { "Content-Type": "application/json" }
-        if (token) headers["Authorization"] = `Bearer ${token}`
-
-        const response = await fetch(`${API_URL}/get_my_orders`, {
-          method: "POST",
-          credentials: "include",
-          headers,
-          body: JSON.stringify({
-            department: department,
-          }),
-        })
-
+      const response = await fetch(`${SPRAVKI_API_URL}/get_my_orders`, {
+        method: "POST",
+        credentials: "include",
+        headers,
+        body: JSON.stringify({
+          department: department,
+        }),
+      })
+      if (response.ok) {
         const data = await response.json()
         const normalizedOrders = data.map((order) => {
           const orderTypeKey = String(order.certificate_type ?? "").toLowerCase()
@@ -110,14 +78,115 @@ export default function UserPageContainer({children, title, department}) {
         })
 
         setOrders(normalizedOrders)
-      } catch (error) {
-        console.error("Ошибка получения заявок:", error)
+      } else if (response.status === 401) {
+        const errBody = await response.json().catch(() => ({}))
+        if (errBody.detail === "Invalid or expired token.") {
+          if (!retried) {
+            try {
+              const refreshResp = await fetch(`${AUTH_API_URL}/api/v1/auth/refresh`, {
+                method: "POST",
+                credentials: "include",
+                headers: { "Content-Type": "application/json" },
+              })
+
+              if (refreshResp.ok) {
+                const refreshData = await refreshResp.json()
+                if (refreshData.access_token) {
+                  Cookies.set("accessToken", refreshData.access_token)
+                  return fetchOrders(true)
+                }
+              }
+            } catch (refreshError) {
+              console.error("Ошибка при попытке обновить токен:", refreshError)
+            }
+          }
+        }
+
+        const from = encodeURIComponent(window.location.href)
+        window.location.replace(`${AUTH_FRONTEND_URL}/?from=${from}`)
+      } else {
+        console.error("Ошибка получения заявок, status:", response.status)
         setOrders([])
       }
+    } catch (error) {
+      console.error("Ошибка получения заявок:", error)
+      setOrders([])
     }
-
-    fetchOrders()
   }, [department])
+
+  useEffect(() => {
+    const token = Cookies.get("accessToken")
+    if (!token) {
+      const from = encodeURIComponent(window.location.href)
+      window.location.replace(`${AUTH_FRONTEND_URL}/?from=${from}`)
+    }
+  }, [])
+
+  /* Получение списка заявок */
+  useEffect(() => {
+    Promise.resolve().then(fetchOrders)
+  }, [fetchOrders])
+
+  /* Отправка заявки и обновление списка */
+  async function sendRequest(current, formData, retried = false) {
+    const token = Cookies.get("accessToken")
+
+    try {
+      const headers = { "Content-Type": "application/json" }
+      if (token) headers["Authorization"] = `Bearer ${token}`
+
+      const resp = await fetch(`${SPRAVKI_API_URL}/create_order`, {
+        method: "POST",
+        credentials: "include",
+        headers,
+        body: JSON.stringify({
+          certificate_type: orderApiTypeByLabel[current],
+          data: formData,
+        }),
+      })
+
+      if (!resp.ok) {
+        if (resp.status === 401) {
+          const errBody = await resp.json().catch(() => ({}))
+          if (errBody.detail === "Invalid or expired token.") {
+            if (!retried) {
+              try {
+                const refreshResp = await fetch(`${AUTH_API_URL}/api/v1/auth/refresh`, {
+                  method: "POST",
+                  credentials: "include",
+                  headers: { "Content-Type": "application/json" },
+                })
+
+                if (refreshResp.ok) {
+                  const refreshData = await refreshResp.json()
+                  if (refreshData.access_token) {
+                    Cookies.set("accessToken", refreshData.access_token)
+                    // retry sendRequest once after successful refresh
+                    return sendRequest(current, formData, true)
+                  }
+                }
+              } catch (refreshError) {
+                console.error("Ошибка при попытке обновить токен:", refreshError)
+              }
+            }
+          }
+
+          const from = encodeURIComponent(window.location.href)
+          window.location.replace(`${AUTH_FRONTEND_URL}/?from=${from}`)
+          return false
+        }
+
+        console.error("Ошибка при отправке заявки, status:", resp.status)
+        return false
+      }
+
+      await fetchOrders()
+      return true
+    } catch (error) {
+      console.error("Ошибка при отправке заявки:", error)
+      return false
+    }
+  }
 
   return (
     <div className="min-h-screen bg-base-200 px-4 py-8 sm:px-6">

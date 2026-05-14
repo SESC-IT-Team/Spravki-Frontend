@@ -46,3 +46,20 @@
   --depth: 1;
   --noise: 0;
 }
+
+.animate-list-item {
+  opacity: 0;
+  transform: translateY(8px);
+  animation: slideUp 320ms ease forwards;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

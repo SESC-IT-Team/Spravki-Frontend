@@ -35,10 +35,9 @@ function FormOrder({ OrderType, formData, setFormData, orderFieldsByLabel }) {
 }
 
 /* Компонент кнопки заказа справки */
-function SendButton({ current, formData, sendRequest, orderFieldsByLabel }) {
+function SendButton({ onClick, disabled }) {
   return (
-    <button className="btn btn-primary" disabled={!isDataValid(formData, orderFieldsByLabel, current)}
-     onClick={() => { sendRequest(current, formData) }}>
+    <button className="btn btn-primary w-full" disabled={disabled} onClick={onClick}>
       Заказать
     </button>
   );
@@ -55,15 +54,33 @@ function isDataValid(formData, orderFieldsByLabel, current) {
   return currField ?? true
 }
 
-export function CertificateForm({current, setCurrent, orders, sendRequest, department, isHostel}) {
+export function CertificateForm({current, setCurrent, orders, sendRequest, department, isHostel, title}) {
   /* Словарь название справки : ее поля + фильтрация по департменту */
   const orderFieldsByLabel = Object.fromEntries(
     certificateConfigs.filter(certificate => certificate.department === department)
     .map((certificate) => [certificate.label, certificate.fields]),
   );
   const [formData, setFormData] = useState({});
+  const [submitStatus, setSubmitStatus] = useState(null) // null | 'success' | 'error'
+  const [isSending, setIsSending] = useState(false)
+
+  async function handleSend() {
+    setSubmitStatus(null)
+    setIsSending(true)
+    const ok = await sendRequest(current, formData)
+    setIsSending(false)
+    if (ok) {
+      setSubmitStatus('success')
+      setFormData({})
+    } else {
+      setSubmitStatus('error')
+    }
+  }
   return (
     <div className="card-body">
+      <div className="mb-4 text-center">
+        <h1 className={`font-bold sm:text-4xl text-primary`}> {title} </h1>
+      </div>
       <div className="rounded-box bg-primary/10 p-4">
         <p className="text-sm leading-relaxed">
           Выберите нужный тип и отправьте заявку. Когда документ будет готов, статус автоматически
@@ -71,7 +88,7 @@ export function CertificateForm({current, setCurrent, orders, sendRequest, depar
         </p>
       </div>
 
-      {isHostel ? (
+      {!isHostel ? (
         <>
           {/* Поле для выбора типа справки */}
           <fieldset className="fieldset mt-4">
@@ -97,7 +114,15 @@ export function CertificateForm({current, setCurrent, orders, sendRequest, depar
       <FormOrder OrderType={current} formData={formData} setFormData={setFormData} orderFieldsByLabel={orderFieldsByLabel} />
 
       {/* Кнопка заказа справки */}
-      <SendButton current={current} formData={formData} sendRequest={sendRequest} orderFieldsByLabel={orderFieldsByLabel}/>
+      <div className="mt-3">
+        <SendButton onClick={handleSend} disabled={!isDataValid(formData, orderFieldsByLabel, current) || isSending} />
+        {submitStatus === 'success' && (
+          <div className="mt-2 text-sm text-primary">Заявка успешно отправлена</div>
+        )}
+        {submitStatus === 'error' && (
+          <div className="mt-2 text-sm text-error">Ошибка при отправке заявки</div>
+        )}
+      </div>
       
 
       <div className="divider my-1" />
@@ -120,8 +145,11 @@ export function CertificateForm({current, setCurrent, orders, sendRequest, depar
         {orders.length === 0 && (
           <li className="py-3 text-sm opacity-60">Заявок пока нет</li>
         )}
-        {orders.map((order) => (
+        {orders.map((order, idx) => (
           <Order
+            key={order.id ?? idx}
+            className="animate-list-item"
+            style={{ animationDelay: `${idx * 60}ms` }}
             OrderType={certificateConfigs.find(certificate => certificate.apiType === order.OrderType)?.label ?? order.OrderType}
             time={order.time}
             status={order.status}

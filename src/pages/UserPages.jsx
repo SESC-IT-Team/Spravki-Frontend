@@ -9,7 +9,7 @@ export function EducationalPage() {
     <UserPageContainer title="Учебный отдел" department="educational">
       {({ current, setCurrent, orders, sendRequest, department }) => (
         <CertificateForm current={current} setCurrent={setCurrent}
-        orders={orders} sendRequest={sendRequest} department={department}/>
+        orders={orders} sendRequest={sendRequest} department={department} isHostel={false} title="Учебный отдел"/>
       )}
     </UserPageContainer>
   )
@@ -21,7 +21,7 @@ export function CSDPage() {
     <UserPageContainer title="Отдел конкурсного отбора" department="CSD">
       {({ current, setCurrent, orders, sendRequest, department }) => (
         <CertificateForm current={current} setCurrent={setCurrent} 
-        orders={orders} sendRequest={sendRequest} department={department}/>
+        orders={orders} sendRequest={sendRequest} department={department} isHostel={false} title="Отдел конкурсного отбора"/>
       )}
     </UserPageContainer>
   )
@@ -33,7 +33,7 @@ export function HostelPage() {
     <UserPageContainer title="Общежитие" department="hostel">
       {({ current, setCurrent, orders, sendRequest, department }) => (
         <CertificateForm current={current} setCurrent={setCurrent} 
-        orders={orders} sendRequest={sendRequest} department={department}/>
+        orders={orders} sendRequest={sendRequest} department={department} isHostel={true} title="Общежитие"/>
       )}
     </UserPageContainer>
   )
