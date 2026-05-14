@@ -1,5 +1,5 @@
 import { Order } from "./UserPageContainer"
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { certificateConfigs } from "./configs"
 
 function FormOrder({ OrderType, formData, setFormData, orderFieldsByLabel }) {
