@@ -1,10 +1,10 @@
 /* Конфигурация для различных типов справок */
 export const certificateConfigs = [
-  { apiType: "Standard", label: "Стандартная", department: "educational", fields: [] },
-  { apiType: "MilitaryRegistration", label: "Для военкомата", department: "educational", fields: [] },
-  { apiType: "Tax", label: "Для налоговой инспекции", department: "educational", fields: [] },
-  { apiType: "SocialFoundation", label: "Для социального фонда", department: "educational", fields: [] },
-  { apiType: "Certificate", label: "Выдача аттестата", department: "CSD", fields: [
+  { apiType: "Standard", label: "Стандартная", department: "educational_department", fields: [] },
+  { apiType: "MilitaryRegistration", label: "Для военкомата", department: "educational_department", fields: [] },
+  { apiType: "Tax", label: "Для налоговой инспекции", department: "educational_department", fields: [] },
+  { apiType: "SocialFoundation", label: "Для социального фонда", department: "educational_department", fields: [] },
+  { apiType: "Certificate", label: "Выдача аттестата", department: "competitive_selection_department", fields: [
     { formLabel: "ФИО Ученика", key: "student_full_name", input_type: "text" },
     { formLabel: "Класс", key: "class", input_type: "text" },
     { formLabel: "Контактный телефон", key: "contact_phone", input_type: "text" },
@@ -12,7 +12,7 @@ export const certificateConfigs = [
     { formLabel: "Причина выбытия из СУНЦ", key: "reason_for_withdrawal", input_type: "text" },
     { formLabel: "Нужна ли справка об успеваемости?(Да/Нет)", key: "needs_transcript", input_type: "text" }
   ] },
-  { apiType: "ExtraditionDocuments", label: "Выдача документов", department: "CSD", fields: [
+  { apiType: "ExtraditionDocuments", label: "Выдача документов", department: "competitive_selection_department", fields: [
     { formLabel: "ФИО Ученика", key: "student_full_name", input_type: "text" },
     { formLabel: "Класс", key: "class", input_type: "text" },
     { formLabel: "Контактный телефон", key: "contact_phone", input_type: "text" },
@@ -20,7 +20,7 @@ export const certificateConfigs = [
     { formLabel: "Место требования для аттестата", key: "location_for_certificate", input_type: "text" },
     { formLabel: "Нужна ли справка об успеваемости?(Да/Нет)", key: "needs_transcript", input_type: "text" }
   ] },
-  { apiType: "Hostel", label: "Общежитие", department: "hostel", fields: [
+  { apiType: "dormitory", label: "Общежитие", department: "dormitory", fields: [
     { formLabel: "ФИО Родителя", key: "parent_full_name", input_type: "text" },
     { formLabel: "ФИО Ученика", key: "student_full_name", input_type: "text" },
     { formLabel: "Цель/Причина", key: "reason_for_stay", input_type: "text" },
