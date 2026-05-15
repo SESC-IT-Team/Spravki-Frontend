@@ -46,6 +46,20 @@ export function Order({ OrderType, time, status, className, style }) {
   )
 }
 
+/*logout function*/
+async function logout() {
+  try {
+    const refreshResp = await fetch(`${AUTH_API_URL}/api/v1/auth/logout`, {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+    })
+    } catch (error) {
+      console.error("Ошибка logout:", error)
+    }
+}
+  
+
 export default function UserPageContainer({children, title, department}) {
   const [ current, setCurrent ] = useState(certificateConfigs.find(certificate => certificate.department === department)?.label ?? "")
   const [ orders, setOrders ] = useState([])
@@ -191,7 +205,9 @@ export default function UserPageContainer({children, title, department}) {
   return (
     <div className="min-h-screen bg-base-200 px-4 py-8 sm:px-6">
       <div className="mx-auto w-full max-w-2xl">
-
+        <div className="flex justify-end mb-2">
+          <button className="btn btn-soft btn-error" onClick={() => logout()}>Выйти</button>
+        </div>
         <div className="card border border-primary/20 bg-base-100 shadow-xl">
           {/* Отрисовка контента */}
           {typeof children === "function"
