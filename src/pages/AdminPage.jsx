@@ -47,8 +47,7 @@ const fieldMap = {
   "Контакные данные": "contact_info",
   "Справка": "needs_certificate",
   "Выход": "leaving_time",
-  "Возвращение": "returning_time",
-  "Департамент": "department"
+  "Возвращение": "returning_time"
 }
 
 /* Таблица для отображения заявок */
@@ -91,7 +90,7 @@ function AdminTable({ data, department }) {
                   >
                     {fieldMap[header] === "needs_certificate" ? (
                       <Link className="btn btn-outline btn-sm btn-primary" to={req.link}>Скачать</Link>
-                    ) : (header !== "Тип" ? (header === "Департамент" ? certificateConfigs.find(certificate => certificate.apiType === req.certificate_type)?.departmentLabel : (header === "Подано" ? formatOrderDate(req[fieldMap[header]]) : req[fieldMap[header === "id" ? "number" : header]])) : certificateConfigs.find(certificate => certificate.apiType === req.certificate_type)?.label ?? req.certificate_type)}
+                    ) : (header !== "Тип" ? (header === "Подано" ? formatOrderDate(req[fieldMap[header]]) : req[fieldMap[header === "id" ? "number" : header]]) : certificateConfigs.find(certificate => certificate.apiType === req.certificate_type)?.label ?? req.certificate_type)}
                   </td>
                 ))}
               </tr>
