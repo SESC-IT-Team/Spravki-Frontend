@@ -55,6 +55,9 @@ async function logout() {
       credentials: "include",
       headers: { "Content-Type": "application/json" },
     })
+    Cookies.remove("accessToken");
+    Cookies.remove("refreshToken");
+    window.location.replace(`${AUTH_FRONTEND_URL}/`);
     } catch (error) {
       console.error("Ошибка logout:", error)
     }
