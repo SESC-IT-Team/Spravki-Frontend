@@ -39,7 +39,8 @@ export function Order({ OrderType, time, status, className, style }) {
         <div className="text-sm font-semibold">{OrderType}</div>
         <div className="text-xs opacity-60">{time}</div>
       </div>
-      <span className={`badge badge-sm ${status === 1 ? "badge-warning" : "badge-success"} font-semibold`}>
+      {/* Добавлен класс whitespace-nowrap и shrink-0, чтобы бадж не сжимался */}
+      <span className={`badge badge-sm ${status === 1 ? "badge-warning" : "badge-success"} font-semibold whitespace-nowrap shrink-0`}>
         {status === 1 ? "В процессе" : "Готово"}
       </span>
     </li>
