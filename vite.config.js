@@ -10,6 +10,7 @@ export default defineConfig(({ mode }) => {
   const AUTH_API_URL = env.VITE_AUTH_FRONTEND_URL
 
   return {
+    base: "/spravki/",
     plugins: [
       react(),
       tailwindcss(),
