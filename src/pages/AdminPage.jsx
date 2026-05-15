@@ -19,13 +19,13 @@ function formatOrderDate(dateRaw) {
 }
 
 const testData = [
-  {number: 22, id:2, created_at:"2026-05-15T02:16:32.897352",full_name:"Иван Петренко", class:"10A", certificate_type: "Standard", leaving_time:"26.02 05:00", returning_time: "28.02 23:00"},
-  {number: 11, id:1, created_at:"2026-05-15T02:16:32.897352",full_name:"Петр Иванов", class:"11B", certificate_type: "ExtraditionDocument", leaving_time:"28.02 15:30", returning_time: "30.03 23:00"}
+  {number: 22, id:2, created_at:"2026-05-15T02:16:32.897352",full_name:"Иван Петренко", certificate_type: "Standard", leaving_time:"26.02 05:00", returning_time: "28.02 23:00"},
+  {number: 11, id:1, created_at:"2026-05-15T02:16:32.897352",full_name:"Петр Иванов", certificate_type: "ExtraditionDocument", leaving_time:"28.02 15:30", returning_time: "30.03 23:00"}
 ];
 
 /* Шапки таблиц для разных отделов */
 const tableHeaders = {
-  "educational_department": ["id", "Подано", "Учащийся", "Класс", "Тип", "Справка"],
+  "educational_department": ["id", "Подано", "Учащийся", "Департамент", "Тип", "Справка"],
   "competitive_selection_department" : ["id", "Подано", "Учащийся", "Класс", "Тип", "Контакные данные", "Справка"],
   "dormitory": ["id", "Подано", "Учащийся", "Выход", "Возвращение", "Справка"],
 }
@@ -47,7 +47,8 @@ const fieldMap = {
   "Контакные данные": "contact_info",
   "Справка": "needs_certificate",
   "Выход": "leaving_time",
-  "Возвращение": "returning_time"
+  "Возвращение": "returning_time",
+  "Департамент": "department"
 }
 
 /* Таблица для отображения заявок */
@@ -90,7 +91,7 @@ function AdminTable({ data, department }) {
                   >
                     {fieldMap[header] === "needs_certificate" ? (
                       <Link className="btn btn-outline btn-sm btn-primary" to={req.link}>Скачать</Link>
-                    ) : (header !== "Тип" ? (header === "Подано" ? formatOrderDate(req[fieldMap[header]]) : req[fieldMap[header === "id" ? "number" : header]]) : certificateConfigs.find(certificate => certificate.apiType === req.certificate_type)?.label ?? req.certificate_type)}
+                    ) : (header !== "Тип" ? (header === "Департамент" ? certificateConfigs.find(certificate => certificate.apiType === req.certificate_type)?.departmentLabel : (header === "Подано" ? formatOrderDate(req[fieldMap[header]]) : req[fieldMap[header === "id" ? "number" : header]])) : certificateConfigs.find(certificate => certificate.apiType === req.certificate_type)?.label ?? req.certificate_type)}
                   </td>
                 ))}
               </tr>
