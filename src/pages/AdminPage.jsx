@@ -7,9 +7,20 @@ const API_URL = import.meta.env.VITE_SPRAVKI_API_URL;
 const AUTH_API_URL = import.meta.env.VITE_AUTH_API_URL;
 const AUTH_FRONTEND_URL = import.meta.env.VITE_AUTH_FRONTEND_URL;
 
+
+/* ФУНКЦИЯ ИЗ ДРУГОГО ФАЙЛА, НАДО СДЕЛАТЬ ЕЕ ИМПОРТ */
+function formatOrderDate(dateRaw) {
+  const date = new Date(dateRaw)
+
+  const datePart = date.toLocaleDateString("ru-RU")
+  const timePart = date.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" })
+
+  return `${datePart} — ${timePart}`
+}
+
 const testData = [
-  {number: 22, id:2, created_at:"23.02 15:44",full_name:"Иван Петренко", class:"10A", certificate_type: certificateConfigs[1].label, leaving_time:"26.02 05:00", returning_time: "28.02 23:00"},
-  {number: 11, id:1, created_at:"24.02 14:00",full_name:"Петр Иванов", class:"11B", certificate_type: certificateConfigs[3].label, leaving_time:"28.02 15:30", returning_time: "30.03 23:00"}
+  {number: 22, id:2, created_at:"2026-05-15T02:16:32.897352",full_name:"Иван Петренко", class:"10A", certificate_type: "Standard", leaving_time:"26.02 05:00", returning_time: "28.02 23:00"},
+  {number: 11, id:1, created_at:"2026-05-15T02:16:32.897352",full_name:"Петр Иванов", class:"11B", certificate_type: "ExtraditionDocument", leaving_time:"28.02 15:30", returning_time: "30.03 23:00"}
 ];
 
 /* Шапки таблиц для разных отделов */
@@ -79,7 +90,7 @@ function AdminTable({ data, department }) {
                   >
                     {fieldMap[header] === "needs_certificate" ? (
                       <Link className="btn btn-outline btn-sm btn-primary" to={req.link}>Скачать</Link>
-                    ) : (req[fieldMap[header === "id" ? "number" : header]])}
+                    ) : (header !== "Тип" ? (header === "Подано" ? formatOrderDate(req[fieldMap[header]]) : req[fieldMap[header === "id" ? "number" : header]]) : certificateConfigs.find(certificate => certificate.apiType === req.certificate_type)?.label ?? req.certificate_type)}
                   </td>
                 ))}
               </tr>
