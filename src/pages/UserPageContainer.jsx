@@ -57,7 +57,8 @@ async function logout() {
     })
     Cookies.remove("accessToken");
     Cookies.remove("refreshToken");
-    window.location.replace(`${AUTH_FRONTEND_URL}/`);
+    const from = encodeURIComponent(window.location.href)
+    window.location.replace(`${AUTH_FRONTEND_URL}/?from=${from}`)
     } catch (error) {
       console.error("Ошибка logout:", error)
     }
