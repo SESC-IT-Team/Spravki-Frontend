@@ -1,223 +1,177 @@
-import { useEffect, useState, useCallback } from "react"
-import { certificateConfigs } from "./configs"
-import Cookies from "js-cookie"
-/* URL API сервера, можно менять в .env файле \*/
-const SPRAVKI_API_URL = import.meta.env.VITE_SPRAVKI_API_URL;
+import { useState, useEffect, useCallback } from "react";
+
 const AUTH_API_URL = import.meta.env.VITE_AUTH_API_URL;
-const AUTH_FRONTEND_URL = import.meta.env.VITE_AUTH_FRONTEND_URL;
 
-/* Словарь значение справки в API : ее название */
-const certificateTypeMap = Object.fromEntries(
-  certificateConfigs.map((certificate) => [certificate.apiType, certificate.label]),
-)
+export default function Auth() {
+  const [login, setLogin] = useState("");
+  const [password, setPassword] = useState("");
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [redirectFrom, setRedirectFrom] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-/* Словарь название справки : ее значение в API */
-const orderApiTypeByLabel = Object.fromEntries(
-  certificateConfigs.map((certificate) => [certificate.label, certificate.apiType]),
-)
+  const isFormValid = login.trim() && password.trim();
 
-/* Форматирование даты справки */
-function formatOrderDate(dateRaw) {
-  const date = new Date(dateRaw)
+  const performRedirect = useCallback((from) => {
+    const target = from ?? redirectFrom;
+    if (target) {
+      try {
+        window.location.replace(decodeURIComponent(target));
+      } catch (e) {
+        console.warn("Invalid redirect URL", e);
+      }
+    }
+  }, [redirectFrom]);
 
-  const datePart = date.toLocaleDateString("ru-RU")
-  const timePart = date.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" })
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const fromParam = params.get("from");
+    if (fromParam) setRedirectFrom(fromParam);
 
-  return `${datePart} — ${timePart}`
-}
+    const checkAuth = async () => {
+      try {
+        // Просто проверяем /me — браузер сам отправит HttpOnly-куку
+        const res = await fetch(`${AUTH_API_URL}/api/v1/auth/me`, {
+          method: "GET",
+          credentials: "include", // <-- ключевой момент
+          headers: { "Content-Type": "application/json" },
+        });
 
-/* Компонент для отображения одной заявки */
-export function Order({ OrderType, time, status, className, style }) {
-  return (
-    <li
-      className={["list-row border-base-content/10 flex items-center justify-between gap-3 border-b py-3 last:border-b-0", className]
-        .filter(Boolean)
-        .join(" ")}
-      style={style}
-    >
-      <div className="space-y-1">
-        <div className="text-sm font-semibold">{OrderType}</div>
-        <div className="text-xs opacity-60">{time}</div>
+        if (res.ok) {
+          setIsAuthenticated(true);
+          performRedirect(fromParam);
+          return;
+        }
+
+        if (res.status === 401) {
+          const refreshRes = await fetch(`${AUTH_API_URL}/api/v1/auth/refresh`, {
+            method: "POST",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+          });
+
+          if (refreshRes.ok) {
+            setIsAuthenticated(true);
+            performRedirect(fromParam);
+            return;
+          }
+        }
+        setIsAuthenticated(false);
+      } catch (e) {
+        console.error("Auth check error:", e);
+        setError("Ошибка связи с сервером");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkAuth();
+  }, []);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const res = await fetch(`${AUTH_API_URL}/api/v1/auth/login`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ login, password }),
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(
+          errorData.detail === "Invalid login or password"
+            ? "Неверный логин или пароль"
+            : errorData.detail || "Ошибка входа"
+        );
+      }
+
+      setIsAuthenticated(true);
+      performRedirect();
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await fetch(`${AUTH_API_URL}/api/v1/auth/logout`, {
+        method: "POST",
+        credentials: "include",
+      });
+    } catch (e) {
+      console.warn("Logout error", e);
+    }
+    setIsAuthenticated(false);
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <span className="loading loading-spinner loading-lg text-primary"></span>
       </div>
-      {/* Добавлен класс whitespace-nowrap и shrink-0, чтобы бадж не сжимался */}
-      <span className={`badge badge-sm ${status === 1 ? "badge-warning" : "badge-success"} font-semibold whitespace-nowrap shrink-0`}>
-        {status === 1 ? "В процессе" : "Готово"}
-      </span>
-    </li>
-  )
-}
-
-/*logout function*/
-async function logout() {
-  try {
-    const refreshResp = await fetch(`${AUTH_API_URL}/api/v1/auth/logout`, {
-      method: "POST",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-    })
-    Cookies.remove("accessToken");
-    Cookies.remove("refreshToken");
-    const from = encodeURIComponent(window.location.href)
-    window.location.replace(`${AUTH_FRONTEND_URL}/?from=${from}`)
-    } catch (error) {
-      console.error("Ошибка logout:", error)
-    }
-}
-  
-
-export default function UserPageContainer({children, title, department}) {
-  const [ current, setCurrent ] = useState(certificateConfigs.find(certificate => certificate.department === department)?.label ?? "")
-  const [ orders, setOrders ] = useState([])
-
-  const fetchOrders = useCallback(async (retried = false) => {
-    try {
-      const token = Cookies.get("accessToken")
-      const headers = { "Content-Type": "application/json" }
-      if (token) headers["Authorization"] = `Bearer ${token}`
-
-      const response = await fetch(`${SPRAVKI_API_URL}/get_my_orders`, {
-        method: "POST",
-        credentials: "include",
-        headers,
-        body: JSON.stringify({
-          department: department,
-        }),
-      })
-      if (response.ok) {
-        const data = await response.json()
-        const normalizedOrders = data.map((order) => {
-          const orderTypeKey = String(order.certificate_type ?? "").toLowerCase()
-
-          return {
-            id: order.id,
-            OrderType: certificateTypeMap[orderTypeKey] ?? order.certificate_type ?? "Неизвестный тип",
-            time: formatOrderDate(order.created_at),
-            status: order.is_created ? 0 : 1,
-          }
-        })
-
-        setOrders(normalizedOrders)
-      } else if (response.status === 401) {
-        const errBody = await response.json().catch(() => ({}))
-        if (errBody.detail === "Invalid or expired token.") {
-          if (!retried) {
-            try {
-              const refreshResp = await fetch(`${AUTH_API_URL}/api/v1/auth/refresh`, {
-                method: "POST",
-                credentials: "include",
-                headers: { "Content-Type": "application/json" },
-              })
-
-              if (refreshResp.ok) {
-                const refreshData = await refreshResp.json()
-                if (refreshData.access_token) {
-                  return fetchOrders(true)
-                }
-              }
-            } catch (refreshError) {
-              console.error("Ошибка при попытке обновить токен:", refreshError)
-            }
-          }
-        }
-
-        const from = encodeURIComponent(window.location.href)
-        window.location.replace(`${AUTH_FRONTEND_URL}/?from=${from}`)
-      } else {
-        console.error("Ошибка получения заявок, status:", response.status)
-        setOrders([])
-      }
-    } catch (error) {
-      console.error("Ошибка получения заявок:", error)
-      setOrders([])
-    }
-  }, [department])
-
-  useEffect(() => {
-    const token = Cookies.get("accessToken")
-    if (!token) {
-      const from = encodeURIComponent(window.location.href)
-      window.location.replace(`${AUTH_FRONTEND_URL}/?from=${from}`)
-    }
-  }, [])
-
-  /* Получение списка заявок */
-  useEffect(() => {
-    Promise.resolve().then(fetchOrders)
-  }, [fetchOrders])
-
-  /* Отправка заявки и обновление списка */
-  async function sendRequest(current, formData, retried = false) {
-    const token = Cookies.get("accessToken")
-
-    try {
-      const headers = { "Content-Type": "application/json" }
-      if (token) headers["Authorization"] = `Bearer ${token}`
-
-      const resp = await fetch(`${SPRAVKI_API_URL}/create_order`, {
-        method: "POST",
-        credentials: "include",
-        headers,
-        body: JSON.stringify({
-          certificate_type: orderApiTypeByLabel[current],
-          data: formData,
-        }),
-      })
-
-      if (!resp.ok) {
-        if (resp.status === 401) {
-          const errBody = await resp.json().catch(() => ({}))
-          if (errBody.detail === "Invalid or expired token.") {
-            if (!retried) {
-              try {
-                const refreshResp = await fetch(`${AUTH_API_URL}/api/v1/auth/refresh`, {
-                  method: "POST",
-                  credentials: "include",
-                  headers: { "Content-Type": "application/json" },
-                })
-
-                if (refreshResp.ok) {
-                  const refreshData = await refreshResp.json()
-                  if (refreshData.access_token) {
-                    // retry sendRequest once after successful refresh
-                    return sendRequest(current, formData, true)
-                  }
-                }
-              } catch (refreshError) {
-                console.error("Ошибка при попытке обновить токен:", refreshError)
-              }
-            }
-          }
-
-          const from = encodeURIComponent(window.location.href)
-          window.location.replace(`${AUTH_FRONTEND_URL}/?from=${from}`)
-          return false
-        }
-
-        console.error("Ошибка при отправке заявки, status:", resp.status)
-        return false
-      }
-
-      await fetchOrders()
-      return true
-    } catch (error) {
-      console.error("Ошибка при отправке заявки:", error)
-      return false
-    }
+    );
   }
 
   return (
-    <div className="min-h-screen bg-base-200 px-4 py-8 sm:px-6">
-      <div className="mx-auto w-full max-w-2xl">
-        <div className="flex justify-end mb-2">
-          <button className="btn btn-soft btn-error" onClick={() => logout()}>Выйти</button>
-        </div>
+    <div className="min-h-screen bg-base-200 px-4 py-8 sm:px-6 content-center">
+      <div className="mx-auto w-full max-w-md">
         <div className="card border border-primary/20 bg-base-100 shadow-xl">
-          {/* Отрисовка контента */}
-          {typeof children === "function"
-            ? children({ current, setCurrent, orders, sendRequest, department, title })
-            : children}
+          <div className="card-body">
+            {!isAuthenticated ? (
+              <>
+                <div className="mb-4 text-center">
+                  <h1 className="font-bold sm:text-4xl text-primary">Авторизация</h1>
+                </div>
+                <form className="flex flex-col gap-2.5 items-center" onSubmit={handleSubmit}>
+                  <fieldset className="fieldset border-primary border-2 rounded-box w-full p-4">
+                    <input
+                      type="text"
+                      className={`input w-full ${isLoading ? "input-disabled" : ""}`}
+                      placeholder="Login"
+                      value={login}
+                      onChange={(e) => setLogin(e.target.value)}
+                    />
+                    <input
+                      type="password"
+                      className={`input w-full ${isLoading ? "input-disabled" : ""}`}
+                      placeholder="Password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                    />
+                    <button
+                      type="submit"
+                      className={`btn btn-primary mt-2 w-full ${!isFormValid || isLoading ? "btn-disabled" : ""}`}
+                    >
+                      {isLoading ? "Вход..." : "Войти"}
+                    </button>
+                  </fieldset>
+                </form>
+                {error && (
+                  <div className="rounded-box bg-error/5 p-4 w-full mt-4">
+                    <div className="text-sm leading-relaxed text-warning">
+                      <p className="font-bold">Ошибка:</p>
+                      {error}
+                    </div>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="text-center">
+                <h1 className="font-bold sm:text-3xl text-primary mb-4">Успешно авторизованы</h1>
+                {redirectFrom && <p className="mb-4">Перенаправление...</p>}
+                <button onClick={handleLogout} className="btn btn-error w-full">Выйти</button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
-  )
+  );
 }
