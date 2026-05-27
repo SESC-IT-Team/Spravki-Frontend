@@ -156,7 +156,6 @@ export default function AdminPage({ department }) {
                 if (refreshResp.ok) {
                   const refreshData = await refreshResp.json()
                   if (refreshData.access_token) {
-                    Cookies.set("accessToken", refreshData.access_token)
                     return fetchData(true)
                   }
                 }
