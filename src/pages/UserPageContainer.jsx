@@ -55,6 +55,8 @@ async function logout() {
       credentials: "include",
       headers: { "Content-Type": "application/json" },
     })
+    Cookies.remove("accessToken");
+    Cookies.remove("refreshToken");
     const from = encodeURIComponent(window.location.href)
     window.location.replace(`${AUTH_FRONTEND_URL}/?from=${from}`)
     } catch (error) {
