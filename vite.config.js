@@ -26,29 +26,7 @@ export default defineConfig(({ mode }) => {
     ],
     server: {
       host: "0.0.0.0",
-      port: 4000,
-      proxy: {
-        '/api': {
-          target: AUTH_API_URL,
-          changeOrigin: true,
-          rewrite: (path) => path.replace(/^\/api/, '')
-        },
-        '/get_orders': {
-          target: AUTH_API_URL,
-          changeOrigin: true,
-          rewrite: (path) => path.replace(/^\/get_orders/, '')
-        },
-        '/get_my_orders': {
-          target: AUTH_API_URL,
-          changeOrigin: true,
-          rewrite: (path) => path.replace(/^\/get_my_orders/, '')
-        },
-        '/create_order': {
-          target: AUTH_API_URL,
-          changeOrigin: true,
-          rewrite: (path) => path.replace(/^\/create_order/, '')
-        }
-      }
+      port: 4000
     }
   }
 })
