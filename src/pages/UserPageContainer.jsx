@@ -55,8 +55,6 @@ async function logout() {
       credentials: "include",
       headers: { "Content-Type": "application/json" },
     })
-    Cookies.remove("accessToken");
-    Cookies.remove("refreshToken");
     const from = encodeURIComponent(window.location.href)
     window.location.replace(`${AUTH_FRONTEND_URL}/?from=${from}`)
     } catch (error) {
@@ -111,7 +109,6 @@ export default function UserPageContainer({children, title, department}) {
               if (refreshResp.ok) {
                 const refreshData = await refreshResp.json()
                 if (refreshData.access_token) {
-                  Cookies.set("accessToken", refreshData.access_token)
                   return fetchOrders(true)
                 }
               }
@@ -179,7 +176,6 @@ export default function UserPageContainer({children, title, department}) {
                 if (refreshResp.ok) {
                   const refreshData = await refreshResp.json()
                   if (refreshData.access_token) {
-                    Cookies.set("accessToken", refreshData.access_token)
                     // retry sendRequest once after successful refresh
                     return sendRequest(current, formData, true)
                   }
