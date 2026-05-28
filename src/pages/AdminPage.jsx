@@ -51,7 +51,6 @@ const fieldMap = {
 }
 
 /* Таблица для отображения заявок */
-/* Таблица для отображения заявок */
 function AdminTable({ data, department }) {
   return (
     <div className="overflow-x-auto w-full rounded-t-2xl border border-base-300">
@@ -114,13 +113,13 @@ function AdminTable({ data, department }) {
 export default function AdminPage({ department }) {
   const [ data, setData ] = useState([])
   
-  useEffect(() => {
+  /*useEffect(() => {
     const token = Cookies.get("accessToken")
     if (!token) {
       const from = encodeURIComponent(window.location.href)
       window.location.replace(`${AUTH_FRONTEND_URL}/?from=${from}`)
     }
-  }, [])
+  }, [])*/
 
   useEffect(() => {
     async function fetchData(retried = false) {
