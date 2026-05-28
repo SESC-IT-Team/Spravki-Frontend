@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import {Link} from "react-router-dom";
 import Cookies from "js-cookie";
 import { certificateConfigs } from "./configs";
+import { initTokenRefresher, requestRefresh, logoutAndRedirect } from "../auth/tokenRefresher";
 
 const API_URL = import.meta.env.VITE_SPRAVKI_API_URL;
 const AUTH_API_URL = import.meta.env.VITE_AUTH_API_URL;
@@ -16,6 +17,14 @@ function formatOrderDate(dateRaw) {
   const timePart = date.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" })
 
   return `${datePart} — ${timePart}`
+}
+
+async function logout() {
+  try {
+    await logoutAndRedirect()
+  } catch (error) {
+    console.error("Ошибка logout:", error)
+  }
 }
 
 const testData = [
@@ -122,6 +131,10 @@ export default function AdminPage({ department }) {
   }, [])*/
 
   useEffect(() => {
+    initTokenRefresher({ AUTH_API_URL, AUTH_FRONTEND_URL })
+  }, [])
+
+  useEffect(() => {
     async function fetchData(retried = false) {
       try {
         const token = Cookies.get("accessToken")
@@ -142,30 +155,18 @@ export default function AdminPage({ department }) {
           const fetched_data = await response.json()
           setData(fetched_data)
         } else if (response.status === 401) {
-          const errBody = await response.json().catch(() => ({}))
-          if (errBody.detail === "Invalid or expired token.") {
-            if (!retried) {
-              try {
-                const refreshResp = await fetch(`${AUTH_API_URL}/api/v1/auth/refresh`, {
-                  method: "POST",
-                  credentials: "include",
-                  headers: { "Content-Type": "application/json" },
-                })
-
-                if (refreshResp.ok) {
-                  const refreshData = await refreshResp.json()
-                  if (refreshData.access_token) {
-                    return fetchData(true)
-                  }
-                }
-              } catch (refreshError) {
-                console.error("Ошибка при попытке обновить токен:", refreshError)
-              }
+          // Try coordinated refresh first (other tabs may refresh too)
+          try {
+            const refreshed = await requestRefresh()
+            if (refreshed) {
+              if (!retried) return fetchData(true)
             }
+          } catch (e) {
+            console.error("Ошибка при попытке обновить токен через BroadCastChannel:", e)
           }
 
-          const from = encodeURIComponent(window.location.href)
-          window.location.replace(`${AUTH_FRONTEND_URL}/?from=${from}`)
+          // If refresh didn't succeed, logout and redirect to auth frontend
+          await logoutAndRedirect()
         } else {
           console.error("Ошибка получения данных, status:", response.status)
           setData(testData)
@@ -183,6 +184,9 @@ export default function AdminPage({ department }) {
 return (
   <div className="min-h-screen bg-base-200 px-4 py-8 sm:px-6">
     <div className="mx-auto w-full max-w-4xl">
+      <div className="flex justify-end mb-2">
+        <button className="btn btn-soft btn-error" onClick={() => logout()}>Выйти</button>
+      </div>
       <div className="card border border-primary/20 bg-base-100 shadow-xl">
         <div className="card-body">
           <div className="mb-4 text-center">

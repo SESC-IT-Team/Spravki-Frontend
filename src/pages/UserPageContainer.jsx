@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from "react"
 import { certificateConfigs } from "./configs"
 import Cookies from "js-cookie"
+import { initTokenRefresher, requestRefresh, logoutAndRedirect } from "../auth/tokenRefresher"
 /* URL API сервера, можно менять в .env файле \*/
 const SPRAVKI_API_URL = import.meta.env.VITE_SPRAVKI_API_URL;
 const AUTH_API_URL = import.meta.env.VITE_AUTH_API_URL;
@@ -50,16 +51,10 @@ export function Order({ OrderType, time, status, className, style }) {
 /*logout function*/
 async function logout() {
   try {
-    const refreshResp = await fetch(`${AUTH_API_URL}/api/v1/auth/logout`, {
-      method: "POST",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-    })
-    const from = encodeURIComponent(window.location.href)
-    window.location.replace(`${AUTH_FRONTEND_URL}/?from=${from}?logged_out=true`)
-    } catch (error) {
-      console.error("Ошибка logout:", error)
-    }
+    await logoutAndRedirect()
+  } catch (error) {
+    console.error("Ошибка logout:", error)
+  }
 }
   
 
@@ -96,30 +91,16 @@ export default function UserPageContainer({children, title, department}) {
 
         setOrders(normalizedOrders)
       } else if (response.status === 401) {
-        const errBody = await response.json().catch(() => ({}))
-        if (errBody.detail === "Invalid or expired token.") {
-          if (!retried) {
-            try {
-              const refreshResp = await fetch(`${AUTH_API_URL}/api/v1/auth/refresh`, {
-                method: "POST",
-                credentials: "include",
-                headers: { "Content-Type": "application/json" },
-              })
-
-              if (refreshResp.ok) {
-                const refreshData = await refreshResp.json()
-                if (refreshData.access_token) {
-                  return fetchOrders(true)
-                }
-              }
-            } catch (refreshError) {
-              console.error("Ошибка при попытке обновить токен:", refreshError)
-            }
+        try {
+          const refreshed = await requestRefresh()
+          if (refreshed) {
+            if (!retried) return fetchOrders(true)
           }
+        } catch (e) {
+          console.error("Ошибка при попытке обновить токен через BroadCastChannel:", e)
         }
 
-        const from = encodeURIComponent(window.location.href)
-        window.location.replace(`${AUTH_FRONTEND_URL}/?from=${from}`)
+        await logoutAndRedirect()
       } else {
         console.error("Ошибка получения заявок, status:", response.status)
         setOrders([])
@@ -137,6 +118,10 @@ export default function UserPageContainer({children, title, department}) {
       window.location.replace(`${AUTH_FRONTEND_URL}/?from=${from}`)
     }
   }, [])*/
+
+  useEffect(() => {
+    initTokenRefresher({ AUTH_API_URL, AUTH_FRONTEND_URL })
+  }, [])
 
   /* Получение списка заявок */
   useEffect(() => {
@@ -163,31 +148,16 @@ export default function UserPageContainer({children, title, department}) {
 
       if (!resp.ok) {
         if (resp.status === 401) {
-          const errBody = await resp.json().catch(() => ({}))
-          if (errBody.detail === "Invalid or expired token.") {
-            if (!retried) {
-              try {
-                const refreshResp = await fetch(`${AUTH_API_URL}/api/v1/auth/refresh`, {
-                  method: "POST",
-                  credentials: "include",
-                  headers: { "Content-Type": "application/json" },
-                })
-
-                if (refreshResp.ok) {
-                  const refreshData = await refreshResp.json()
-                  if (refreshData.access_token) {
-                    // retry sendRequest once after successful refresh
-                    return sendRequest(current, formData, true)
-                  }
-                }
-              } catch (refreshError) {
-                console.error("Ошибка при попытке обновить токен:", refreshError)
-              }
+          try {
+            const refreshed = await requestRefresh()
+            if (refreshed) {
+              if (!retried) return sendRequest(current, formData, true)
             }
+          } catch (e) {
+            console.error("Ошибка при попытке обновить токен через BroadCastChannel:", e)
           }
 
-          const from = encodeURIComponent(window.location.href)
-          window.location.replace(`${AUTH_FRONTEND_URL}/?from=${from}`)
+          await logoutAndRedirect()
           return false
         }
 
