@@ -130,13 +130,13 @@ export default function UserPageContainer({children, title, department}) {
     }
   }, [department])
 
-  useEffect(() => {
+  /*useEffect(() => {
     const token = Cookies.get("accessToken")
     if (!token) {
       const from = encodeURIComponent(window.location.href)
       window.location.replace(`${AUTH_FRONTEND_URL}/?from=${from}`)
     }
-  }, [])
+  }, [])*/
 
   /* Получение списка заявок */
   useEffect(() => {
