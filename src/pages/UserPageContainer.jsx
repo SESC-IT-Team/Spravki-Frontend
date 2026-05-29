@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from "react"
 import { certificateConfigs } from "./configs"
 import Cookies from "js-cookie"
 import { initTokenRefresher, requestRefresh, logoutAndRedirect } from "../auth/tokenRefresher"
+
 /* URL API сервера, можно менять в .env файле \*/
 const SPRAVKI_API_URL = import.meta.env.VITE_SPRAVKI_API_URL;
 const AUTH_API_URL = import.meta.env.VITE_AUTH_API_URL;
@@ -141,8 +142,10 @@ export default function UserPageContainer({children, title, department}) {
         credentials: "include",
         headers,
         body: JSON.stringify({
-          certificate_type: orderApiTypeByLabel[current],
-          data: formData,
+          headers: {
+            certificate_type: orderApiTypeByLabel[current]
+          },
+          data: formData
         }),
       })
 
