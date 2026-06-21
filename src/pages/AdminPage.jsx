@@ -64,7 +64,7 @@ function AdminTable({ data, department }) {
       const response = await fetch(`${API_URL}/download`, {
         method: "POST",
         credentials: "include",
-        headers,
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ order_id: orderId }),
       });
     } catch (error) {
