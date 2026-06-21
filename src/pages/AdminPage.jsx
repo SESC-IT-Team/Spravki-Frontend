@@ -27,10 +27,6 @@ async function logout() {
   }
 }
 
-const testData = [
-  {number: 22, id:2, created_at:"2026-05-15T02:16:32.897352",full_name:"Иван Петренко", certificate_type: "Standard", leaving_time:"26.02 05:00", returning_time: "28.02 23:00"},
-  {number: 11, id:1, created_at:"2026-05-15T02:16:32.897352",full_name:"Петр Иванов", certificate_type: "ExtraditionDocument", leaving_time:"28.02 15:30", returning_time: "30.03 23:00"}
-];
 
 /* Шапки таблиц для разных отделов */
 const tableHeaders = {
@@ -169,12 +165,10 @@ export default function AdminPage({ department }) {
           await logoutAndRedirect()
         } else {
           console.error("Ошибка получения данных, status:", response.status)
-          setData(testData)
         }
 
       } catch (error) {
         console.error("Ошибка получения данных:", error)
-        setData(testData)
       }
     }
 
