@@ -146,7 +146,7 @@ export default function AdminPage({ department }) {
           credentials: "include",
           headers,
           body: JSON.stringify({
-            filter: "date_asc",
+            filter: "date_desc",
             department: department
           }),
         })
