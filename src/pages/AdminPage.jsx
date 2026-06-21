@@ -57,6 +57,21 @@ const fieldMap = {
 
 /* Таблица для отображения заявок */
 function AdminTable({ data, department }) {
+
+  /* Функция для запроса при скачивании справки */
+  async function sendDownloadRequest(orderId) {
+    try {
+      const response = await fetch(`${API_URL}/download`, {
+        method: "POST",
+        credentials: "include",
+        headers,
+        body: JSON.stringify({ order_id: orderId }),
+      });
+    } catch (error) {
+      console.error("Ошибка при отправке запроса на скачивание:", error);
+    }
+  }
+
   return (
     <div className="overflow-x-auto w-full rounded-t-2xl border border-base-300">
       <table className="table w-full">
@@ -93,7 +108,9 @@ function AdminTable({ data, department }) {
                     key={`td-${req.id}-${header}`}
                   >
                     {fieldMap[header] === "needs_certificate" ? (
-                      <Link className="btn btn-outline btn-sm btn-primary" to={req.link}>Скачать</Link>
+                      <Link className="btn btn-outline btn-sm btn-primary" to={req.link} onClick={() => sendDownloadRequest(req.id)}>
+                        Скачать
+                      </Link>
                     ) : (header !== "Тип" ? (header === "Подано" ? formatOrderDate(req[fieldMap[header]]) : req[fieldMap[header === "id" ? "number" : header]]) : certificateConfigs.find(certificate => certificate.apiType === req.certificate_type)?.label ?? req.certificate_type)}
                   </td>
                 ))}
