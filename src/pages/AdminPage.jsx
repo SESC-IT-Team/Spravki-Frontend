@@ -1,13 +1,8 @@
 import { useState, useEffect } from "react";
-import {Link} from "react-router-dom";
-import Cookies from "js-cookie";
+import {Link, useNavigate} from "react-router-dom";
+import { useAuth, useAuthFetch } from "auth-lib";
 import { certificateConfigs } from "./configs";
-import { initTokenRefresher, requestRefresh, logoutAndRedirect } from "../auth/tokenRefresher";
-
-const API_URL = import.meta.env.VITE_SPRAVKI_API_URL;
-const AUTH_API_URL = import.meta.env.VITE_AUTH_API_URL;
-const AUTH_FRONTEND_URL = import.meta.env.VITE_AUTH_FRONTEND_URL;
-
+import { API_BASE } from "../auth/authConfig";
 
 /* ФУНКЦИЯ ИЗ ДРУГОГО ФАЙЛА, НАДО СДЕЛАТЬ ЕЕ ИМПОРТ */
 function formatOrderDate(dateRaw) {
@@ -18,15 +13,6 @@ function formatOrderDate(dateRaw) {
 
   return `${datePart} — ${timePart}`
 }
-
-async function logout() {
-  try {
-    await logoutAndRedirect()
-  } catch (error) {
-    console.error("Ошибка logout:", error)
-  }
-}
-
 
 /* Шапки таблиц для разных отделов */
 const tableHeaders = {
@@ -61,7 +47,7 @@ function AdminTable({ data, department }) {
   /* Функция для запроса при скачивании справки */
   async function sendDownloadRequest(orderId) {
     try {
-      const response = await fetch(`${API_URL}/download`, {
+      await fetch(`${API_BASE}/download`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
@@ -85,7 +71,7 @@ function AdminTable({ data, department }) {
                   text-white
                   ${index === 0 ? "rounded-tl-2xl" : ""}
                   ${index === tableHeaders[department].length - 1 ? "rounded-tr-2xl" : ""}
-                  whitespace-nowrap 
+                  whitespace-nowrap
                 `}
               >
                 {header}
@@ -100,11 +86,11 @@ function AdminTable({ data, department }) {
             data.map((req, idx) => (
               <tr key={req.id} className="animate-list-item" style={{ animationDelay: `${idx * 60}ms` }}>
                 {tableHeaders[department]?.map((header) => (
-                  <td 
+                  <td
                     className={`
                       font-${fieldMap[header] === "id" ? "bold" : "normal"}
                       whitespace-nowrap
-                    `} 
+                    `}
                     key={`td-${req.id}-${header}`}
                   >
                     {fieldMap[header] === "needs_certificate" ? (
@@ -134,30 +120,15 @@ function AdminTable({ data, department }) {
 
 export default function AdminPage({ department }) {
   const [ data, setData ] = useState([])
-  
-  /*useEffect(() => {
-    const token = Cookies.get("accessToken")
-    if (!token) {
-      const from = encodeURIComponent(window.location.href)
-      window.location.replace(`${AUTH_FRONTEND_URL}/?from=${from}`)
-    }
-  }, [])*/
+  const authFetch = useAuthFetch()
+  const { logout } = useAuth()
+  const navigate = useNavigate()
 
   useEffect(() => {
-    initTokenRefresher({ AUTH_API_URL, AUTH_FRONTEND_URL })
-  }, [])
-
-  useEffect(() => {
-    async function fetchData(retried = false) {
+    async function fetchData() {
       try {
-        const token = Cookies.get("accessToken")
-        const headers = { "Content-Type": "application/json" }
-        if (token) headers["Authorization"] = `Bearer ${token}`
-
-        const response = await fetch(`${API_URL}/get_orders`, {
+        const response = await authFetch(`${API_BASE}/get_orders`, {
           method: "POST",
-          credentials: "include",
-          headers,
           body: JSON.stringify({
             filter: "date_desc",
             department: department
@@ -168,35 +139,34 @@ export default function AdminPage({ department }) {
           const fetched_data = await response.json()
           setData(fetched_data)
         } else if (response.status === 401) {
-          // Try coordinated refresh first (other tabs may refresh too)
-          try {
-            const refreshed = await requestRefresh()
-            if (refreshed) {
-              if (!retried) return fetchData(true)
-            }
-          } catch (e) {
-            console.error("Ошибка при попытке обновить токен через BroadCastChannel:", e)
-          }
-
-          // If refresh didn't succeed, logout and redirect to auth frontend
-          await logoutAndRedirect()
+          await logout()
+          navigate("/spravki/edu")
         } else {
-          console.error("Ошибка получения данных, status:", response.status)
+          console.error("Ошибка получения данных, status:", response.status);
         }
 
       } catch (error) {
-        console.error("Ошибка получения данных:", error)
+        console.error("Ошибка получения данных:", error);
       }
     }
 
     fetchData()
-  }, [department])
+  }, [department, authFetch, logout, navigate])
+
+  async function handleLogout() {
+    try {
+      await logout()
+      navigate("/spravki/edu")
+    } catch (error) {
+      console.error("Ошибка logout:", error)
+    }
+  }
 
 return (
   <div className="min-h-screen bg-base-200 px-4 py-8 sm:px-6">
     <div className="mx-auto w-full max-w-4xl">
       <div className="flex justify-end mb-2">
-        <button className="btn btn-soft btn-error" onClick={() => logout()}>Выйти</button>
+        <button className="btn btn-soft btn-error" onClick={() => handleLogout()}>Выйти</button>
       </div>
       <div className="card border border-primary/20 bg-base-100 shadow-xl">
         <div className="card-body">

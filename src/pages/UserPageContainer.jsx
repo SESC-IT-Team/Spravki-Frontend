@@ -1,12 +1,8 @@
 import { useEffect, useState, useCallback } from "react"
+import { useNavigate } from "react-router-dom"
+import { useAuth, useAuthFetch } from "auth-lib"
 import { certificateConfigs } from "./configs"
-import Cookies from "js-cookie"
-import { initTokenRefresher, requestRefresh, logoutAndRedirect } from "../auth/tokenRefresher"
-
-/* URL API сервера, можно менять в .env файле \*/
-const SPRAVKI_API_URL = import.meta.env.VITE_SPRAVKI_API_URL;
-const AUTH_API_URL = import.meta.env.VITE_AUTH_API_URL;
-const AUTH_FRONTEND_URL = import.meta.env.VITE_AUTH_FRONTEND_URL;
+import { API_BASE } from "../auth/authConfig"
 
 /* Словарь значение справки в API : ее название */
 const certificateTypeMap = Object.fromEntries(
@@ -49,30 +45,17 @@ export function Order({ OrderType, time, status, className, style }) {
   )
 }
 
-/*logout function*/
-async function logout() {
-  try {
-    await logoutAndRedirect()
-  } catch (error) {
-    console.error("Ошибка logout:", error)
-  }
-}
-  
-
 export default function UserPageContainer({children, title, department}) {
   const [ current, setCurrent ] = useState(certificateConfigs.find(certificate => certificate.department === department)?.label ?? "")
   const [ orders, setOrders ] = useState([])
+  const authFetch = useAuthFetch()
+  const { logout } = useAuth()
+  const navigate = useNavigate()
 
-  const fetchOrders = useCallback(async (retried = false) => {
+  const fetchOrders = useCallback(async () => {
     try {
-      const token = Cookies.get("accessToken")
-      const headers = { "Content-Type": "application/json" }
-      if (token) headers["Authorization"] = `Bearer ${token}`
-
-      const response = await fetch(`${SPRAVKI_API_URL}/get_my_orders`, {
+      const response = await authFetch(`${API_BASE}/get_my_orders`, {
         method: "POST",
-        credentials: "include",
-        headers,
         body: JSON.stringify({
           department: department,
         }),
@@ -92,16 +75,8 @@ export default function UserPageContainer({children, title, department}) {
 
         setOrders(normalizedOrders)
       } else if (response.status === 401) {
-        try {
-          const refreshed = await requestRefresh()
-          if (refreshed) {
-            if (!retried) return fetchOrders(true)
-          }
-        } catch (e) {
-          console.error("Ошибка при попытке обновить токен через BroadCastChannel:", e)
-        }
-
-        await logoutAndRedirect()
+        await logout()
+        navigate("/spravki/edu")
       } else {
         console.error("Ошибка получения заявок, status:", response.status)
         setOrders([])
@@ -110,37 +85,17 @@ export default function UserPageContainer({children, title, department}) {
       console.error("Ошибка получения заявок:", error)
       setOrders([])
     }
-  }, [department])
+  }, [department, authFetch, logout, navigate])
 
-  /*useEffect(() => {
-    const token = Cookies.get("accessToken")
-    if (!token) {
-      const from = encodeURIComponent(window.location.href)
-      window.location.replace(`${AUTH_FRONTEND_URL}/?from=${from}`)
-    }
-  }, [])*/
-
-  useEffect(() => {
-    initTokenRefresher({ AUTH_API_URL, AUTH_FRONTEND_URL })
-  }, [])
-
-  /* Получение списка заявок */
   useEffect(() => {
     Promise.resolve().then(fetchOrders)
   }, [fetchOrders])
 
   /* Отправка заявки и обновление списка */
-  async function sendRequest(current, formData, retried = false) {
-    const token = Cookies.get("accessToken")
-
+  async function sendRequest(current, formData) {
     try {
-      const headers = { "Content-Type": "application/json" }
-      if (token) headers["Authorization"] = `Bearer ${token}`
-
-      const resp = await fetch(`${SPRAVKI_API_URL}/create_order`, {
+      const resp = await authFetch(`${API_BASE}/create_order`, {
         method: "POST",
-        credentials: "include",
-        headers,
         body: JSON.stringify({
           headers: {
             certificate_type: orderApiTypeByLabel[current]
@@ -151,16 +106,8 @@ export default function UserPageContainer({children, title, department}) {
 
       if (!resp.ok) {
         if (resp.status === 401) {
-          try {
-            const refreshed = await requestRefresh()
-            if (refreshed) {
-              if (!retried) return sendRequest(current, formData, true)
-            }
-          } catch (e) {
-            console.error("Ошибка при попытке обновить токен через BroadCastChannel:", e)
-          }
-
-          await logoutAndRedirect()
+          await logout()
+          navigate("/spravki/edu")
           return false
         }
 
@@ -176,11 +123,20 @@ export default function UserPageContainer({children, title, department}) {
     }
   }
 
+  async function handleLogout() {
+    try {
+      await logout()
+      navigate("/spravki/edu")
+    } catch (error) {
+      console.error("Ошибка logout:", error)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-base-200 px-4 py-8 sm:px-6">
       <div className="mx-auto w-full max-w-2xl">
         <div className="flex justify-end mb-2">
-          <button className="btn btn-soft btn-error" onClick={() => logout()}>Выйти</button>
+          <button className="btn btn-soft btn-error" onClick={() => handleLogout()}>Выйти</button>
         </div>
         <div className="card border border-primary/20 bg-base-100 shadow-xl">
           {/* Отрисовка контента */}
