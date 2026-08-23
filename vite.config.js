@@ -29,13 +29,7 @@ export default defineConfig(({ mode }) => {
         '*'
       ],
       host: "0.0.0.0",
-      port: 4000,
-      proxy: {
-        "/api": {
-          target: "http://localhost:8000",
-          changeOrigin: true
-        }
-      }
+      port: 4000
     }
   }
 })
