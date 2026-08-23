@@ -12,25 +12,19 @@ services:
 
       - traefik.http.services.frontend.loadbalancer.server.port=80
 
-      - traefik.http.middlewares.frontend-slash.redirectregex.regex=^https?://([^/]+)/spravki$$
-      - traefik.http.middlewares.frontend-slash.redirectregex.replacement=https://$${1}/spravki/
-      - traefik.http.middlewares.frontend-slash.redirectregex.permanent=true
-
-      - traefik.http.middlewares.frontend-strip.stripprefix.prefixes=/spravki
-
       - traefik.http.middlewares.frontend-headers.headers.contenttypenosniff=true
       - traefik.http.middlewares.frontend-headers.headers.referrerpolicy=strict-origin-when-cross-origin
 
-      - traefik.http.routers.frontend.rule=Host(`${DOMAIN}`) && PathPrefix(`/spravki`)
+      - traefik.http.routers.frontend.rule=Host(`${APP_DOMAIN:-${DOMAIN}}`)
       - traefik.http.routers.frontend.entrypoints=web
-      - traefik.http.routers.frontend.middlewares=frontend-slash,frontend-strip,frontend-headers
+      - traefik.http.routers.frontend.middlewares=frontend-headers
       - traefik.http.routers.frontend.service=frontend
 
-      - traefik.http.routers.frontend-secure.rule=Host(`${DOMAIN}`) && PathPrefix(`/spravki`)
+      - traefik.http.routers.frontend-secure.rule=Host(`${APP_DOMAIN:-${DOMAIN}}`)
       - traefik.http.routers.frontend-secure.entrypoints=websecure
       - traefik.http.routers.frontend-secure.tls=true
       - traefik.http.routers.frontend-secure.tls.certresolver=letsencrypt
-      - traefik.http.routers.frontend-secure.middlewares=frontend-slash,frontend-strip,frontend-headers
+      - traefik.http.routers.frontend-secure.middlewares=frontend-headers
       - traefik.http.routers.frontend-secure.service=frontend
 
 networks:

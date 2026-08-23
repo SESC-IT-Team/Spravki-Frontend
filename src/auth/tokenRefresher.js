@@ -5,6 +5,18 @@ let authApiUrl = '';
 let authFrontendUrl = '';
 let intervalId = null;
 
+export function getServiceUrls() {
+  const { protocol, hostname } = window.location;
+  const baseDomain = hostname.split('.').slice(1).join('.');
+  const isLocal = hostname === 'localhost' || hostname === '127.0.0.1';
+
+  return {
+    spravkiApiUrl: import.meta.env.VITE_SPRAVKI_API_URL || (isLocal ? 'http://localhost:8001' : `${protocol}//api.${hostname}`),
+    authApiUrl: import.meta.env.VITE_AUTH_API_URL || (isLocal ? 'http://localhost:8000' : `${protocol}//api.users.${baseDomain}`),
+    authFrontendUrl: import.meta.env.VITE_AUTH_FRONTEND_URL || (isLocal ? 'http://localhost:4001' : `${protocol}//users.${baseDomain}`),
+  };
+}
+
 async function doRefresh() {
   if (!authApiUrl) return false;
   try {

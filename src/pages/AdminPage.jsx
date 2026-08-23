@@ -2,11 +2,9 @@ import { useState, useEffect } from "react";
 import {Link} from "react-router-dom";
 import Cookies from "js-cookie";
 import { certificateConfigs } from "./configs";
-import { initTokenRefresher, requestRefresh, logoutAndRedirect } from "../auth/tokenRefresher";
+import { getServiceUrls, initTokenRefresher, requestRefresh, logoutAndRedirect } from "../auth/tokenRefresher";
 
-const API_URL = import.meta.env.VITE_SPRAVKI_API_URL;
-const AUTH_API_URL = import.meta.env.VITE_AUTH_API_URL;
-const AUTH_FRONTEND_URL = import.meta.env.VITE_AUTH_FRONTEND_URL;
+const { spravkiApiUrl: API_URL, authApiUrl: AUTH_API_URL, authFrontendUrl: AUTH_FRONTEND_URL } = getServiceUrls();
 
 
 /* ФУНКЦИЯ ИЗ ДРУГОГО ФАЙЛА, НАДО СДЕЛАТЬ ЕЕ ИМПОРТ */

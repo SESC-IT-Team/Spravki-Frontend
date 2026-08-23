@@ -1,12 +1,9 @@
 import { useEffect, useState, useCallback } from "react"
 import { certificateConfigs } from "./configs"
 import Cookies from "js-cookie"
-import { initTokenRefresher, requestRefresh, logoutAndRedirect } from "../auth/tokenRefresher"
+import { getServiceUrls, initTokenRefresher, requestRefresh, logoutAndRedirect } from "../auth/tokenRefresher"
 
-/* URL API сервера, можно менять в .env файле \*/
-const SPRAVKI_API_URL = import.meta.env.VITE_SPRAVKI_API_URL;
-const AUTH_API_URL = import.meta.env.VITE_AUTH_API_URL;
-const AUTH_FRONTEND_URL = import.meta.env.VITE_AUTH_FRONTEND_URL;
+const { spravkiApiUrl: SPRAVKI_API_URL, authApiUrl: AUTH_API_URL, authFrontendUrl: AUTH_FRONTEND_URL } = getServiceUrls();
 
 /* Словарь значение справки в API : ее название */
 const certificateTypeMap = Object.fromEntries(

@@ -1,8 +1,6 @@
 import UserPageContainer from "./UserPageContainer";
 import {CertificateForm} from "./Content";
 
-const AUTH_API_URL = import.meta.env.VITE_AUTH_API_URL;
-
 export function EducationalPage() {
   /* Запаковка в контейнер UI */
   return (
