@@ -20,7 +20,7 @@ export const certificateConfigs = [
     { formLabel: "Место требования для аттестата", key: "location_for_certificate", input_type: "text" },
     { formLabel: "Нужна ли справка об успеваемости?(Да/Нет)", key: "needs_transcript", input_type: "text" }
   ] },
-  { apiType: "Hostel", label: "Общежитие", department: "Hostel", departmentLabel: "Общежитие", fields: [
+  { apiType: "Hostel", label: "Общежитие", department: "dormitory", departmentLabel: "Общежитие", fields: [
     { formLabel: "ФИО Ученика", key: "student_full_name", input_type: "text" },
     { formLabel: "Цель/Причина", key: "reason_for_stay", input_type: "text" },
     { formLabel: "Место(Адрес) Пребывания", key: "stay_location", input_type: "text" },

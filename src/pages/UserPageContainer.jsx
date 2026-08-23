@@ -1,9 +1,8 @@
 import { useEffect, useState, useCallback } from "react"
+import { useLocation, useNavigate } from "react-router-dom"
+import { LogoutButton, useAuth, useAuthFetch } from "auth-lib"
 import { certificateConfigs } from "./configs"
-import Cookies from "js-cookie"
-import { getServiceUrls, initTokenRefresher, requestRefresh, logoutAndRedirect } from "../auth/tokenRefresher"
-
-const { spravkiApiUrl: SPRAVKI_API_URL, authApiUrl: AUTH_API_URL, authFrontendUrl: AUTH_FRONTEND_URL } = getServiceUrls();
+import { API_BASE } from "../auth/authConfig"
 
 /* Словарь значение справки в API : ее название */
 const certificateTypeMap = Object.fromEntries(
@@ -46,33 +45,68 @@ export function Order({ OrderType, time, status, className, style }) {
   )
 }
 
-/*logout function*/
-async function logout() {
-  try {
-    await logoutAndRedirect()
-  } catch (error) {
-    console.error("Ошибка logout:", error)
-  }
-}
-  
-
 export default function UserPageContainer({children, title, department}) {
   const [ current, setCurrent ] = useState(certificateConfigs.find(certificate => certificate.department === department)?.label ?? "")
   const [ orders, setOrders ] = useState([])
+  const [ ordersLoading, setOrdersLoading ] = useState(true)
+  const [ childrenList, setChildrenList ] = useState([])
+  const [ selectedChildId, setSelectedChildId ] = useState("")
+  const [ childrenLoading, setChildrenLoading ] = useState(false)
+  const [ childrenError, setChildrenError ] = useState("")
+  const authFetch = useAuthFetch()
+  const { logout } = useAuth()
+  const location = useLocation()
+  const navigate = useNavigate()
+  const currentUrl = `${location.pathname}${location.search}${location.hash}`
+  const currentCertificateType = orderApiTypeByLabel[current]
 
-  const fetchOrders = useCallback(async (retried = false) => {
+  const fetchChildren = useCallback(async () => {
+    if (!currentCertificateType) {
+      setChildrenList([])
+      setSelectedChildId("")
+      return
+    }
+
+    setChildrenLoading(true)
+    setChildrenError("")
+    setSelectedChildId("")
+
     try {
-      const token = Cookies.get("accessToken")
-      const headers = { "Content-Type": "application/json" }
-      if (token) headers["Authorization"] = `Bearer ${token}`
+      const params = new URLSearchParams({ certificate_type: currentCertificateType })
+      const response = await authFetch(`${API_BASE}/get_children?${params}`, { method: "GET" })
 
-      const response = await fetch(`${SPRAVKI_API_URL}/get_my_orders`, {
-        method: "POST",
-        credentials: "include",
-        headers,
-        body: JSON.stringify({
-          department: department,
-        }),
+      if (response.ok) {
+        const data = await response.json()
+        const nextChildren = Array.isArray(data) ? data : []
+        setChildrenList(nextChildren)
+        const onlyChild = nextChildren.length === 1 ? nextChildren[0] : null
+        setSelectedChildId(onlyChild?.child_id ?? onlyChild?.id ?? onlyChild?.uuid ?? "")
+      } else if (response.status === 401) {
+        await logout()
+        navigate(currentUrl)
+      } else {
+        setChildrenList([])
+        setChildrenError("Не удалось загрузить список детей")
+      }
+    } catch (error) {
+      console.error("Ошибка получения списка детей:", error)
+      setChildrenList([])
+      setChildrenError("Не удалось загрузить список детей")
+    } finally {
+      setChildrenLoading(false)
+    }
+  }, [authFetch, currentCertificateType, currentUrl, logout, navigate])
+
+  useEffect(() => {
+    Promise.resolve().then(fetchChildren)
+  }, [fetchChildren])
+
+  const fetchOrders = useCallback(async () => {
+    setOrdersLoading(true)
+
+    try {
+      const response = await authFetch(`${API_BASE}/my_orders?department=${department}`, {
+        method: "GET"
       })
       if (response.ok) {
         const data = await response.json()
@@ -89,16 +123,8 @@ export default function UserPageContainer({children, title, department}) {
 
         setOrders(normalizedOrders)
       } else if (response.status === 401) {
-        try {
-          const refreshed = await requestRefresh()
-          if (refreshed) {
-            if (!retried) return fetchOrders(true)
-          }
-        } catch (e) {
-          console.error("Ошибка при попытке обновить токен через BroadCastChannel:", e)
-        }
-
-        await logoutAndRedirect()
+        await logout()
+        navigate(currentUrl)
       } else {
         console.error("Ошибка получения заявок, status:", response.status)
         setOrders([])
@@ -106,39 +132,31 @@ export default function UserPageContainer({children, title, department}) {
     } catch (error) {
       console.error("Ошибка получения заявок:", error)
       setOrders([])
+    } finally {
+      setOrdersLoading(false)
     }
-  }, [department])
+  }, [department, authFetch, currentUrl, logout, navigate])
 
-  /*useEffect(() => {
-    const token = Cookies.get("accessToken")
-    if (!token) {
-      const from = encodeURIComponent(window.location.href)
-      window.location.replace(`${AUTH_FRONTEND_URL}/?from=${from}`)
-    }
-  }, [])*/
-
-  useEffect(() => {
-    initTokenRefresher({ AUTH_API_URL, AUTH_FRONTEND_URL })
-  }, [])
-
-  /* Получение списка заявок */
   useEffect(() => {
     Promise.resolve().then(fetchOrders)
   }, [fetchOrders])
 
   /* Отправка заявки и обновление списка */
-  async function sendRequest(current, formData, retried = false) {
-    const token = Cookies.get("accessToken")
+  async function sendRequest(current, formData) {
+    if (!selectedChildId) {
+      return false
+    }
 
     try {
-      const headers = { "Content-Type": "application/json" }
-      if (token) headers["Authorization"] = `Bearer ${token}`
-
-      const resp = await fetch(`${SPRAVKI_API_URL}/create_order`, {
+      const resp = await authFetch(`${API_BASE}/create_order`, {
         method: "POST",
-        credentials: "include",
-        headers,
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
+          child_id: {
+            child_id: selectedChildId,
+          },
           headers: {
             certificate_type: orderApiTypeByLabel[current]
           },
@@ -148,16 +166,8 @@ export default function UserPageContainer({children, title, department}) {
 
       if (!resp.ok) {
         if (resp.status === 401) {
-          try {
-            const refreshed = await requestRefresh()
-            if (refreshed) {
-              if (!retried) return sendRequest(current, formData, true)
-            }
-          } catch (e) {
-            console.error("Ошибка при попытке обновить токен через BroadCastChannel:", e)
-          }
-
-          await logoutAndRedirect()
+          await logout()
+          navigate(currentUrl)
           return false
         }
 
@@ -177,12 +187,25 @@ export default function UserPageContainer({children, title, department}) {
     <div className="min-h-screen bg-base-200 px-4 py-8 sm:px-6">
       <div className="mx-auto w-full max-w-2xl">
         <div className="flex justify-end mb-2">
-          <button className="btn btn-soft btn-error" onClick={() => logout()}>Выйти</button>
+          <LogoutButton className="btn btn-soft btn-error" redirectTo={currentUrl}>Выйти</LogoutButton>
         </div>
         <div className="card border border-primary/20 bg-base-100 shadow-xl">
           {/* Отрисовка контента */}
           {typeof children === "function"
-            ? children({ current, setCurrent, orders, sendRequest, department, title })
+            ? children({
+              current,
+              setCurrent,
+              orders,
+              ordersLoading,
+              sendRequest,
+              department,
+              title,
+              children: childrenList,
+              selectedChildId,
+              setSelectedChildId,
+              childrenLoading,
+              childrenError,
+            })
             : children}
         </div>
       </div>

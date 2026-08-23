@@ -10,7 +10,7 @@ export default defineConfig(({ mode }) => {
   const AUTH_API_URL = env.VITE_AUTH_FRONTEND_URL
 
   return {
-    base: "/spravki/",
+    base: "/",
     plugins: [
       react(),
       tailwindcss(),
@@ -25,6 +25,9 @@ export default defineConfig(({ mode }) => {
       }
     ],
     server: {
+      allowedHosts: [
+        '*'
+      ],
       host: "0.0.0.0",
       port: 4000
     }

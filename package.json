@@ -11,8 +11,8 @@
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.2.2",
+    "auth-lib": "file:auth-lib-0.1.0.tgz",
     "daisyui": "^5.5.19",
-    "js-cookie": "^3.0.5",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "react-router-dom": "^7.14.2",

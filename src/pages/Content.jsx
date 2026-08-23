@@ -54,7 +54,7 @@ function isDataValid(formData, orderFieldsByLabel, current) {
   return currField ?? true
 }
 
-export function CertificateForm({current, setCurrent, orders, sendRequest, department, isHostel, title}) {
+export function CertificateForm({current, setCurrent, orders, ordersLoading, sendRequest, department, isHostel, title, children, selectedChildId, setSelectedChildId, childrenLoading, childrenError}) {
   /* Словарь название справки : ее поля + фильтрация по департменту */
   const orderFieldsByLabel = Object.fromEntries(
     certificateConfigs.filter(certificate => certificate.department === department)
@@ -76,6 +76,15 @@ export function CertificateForm({current, setCurrent, orders, sendRequest, depar
       setSubmitStatus('error')
     }
   }
+
+  function getChildId(child) {
+    return child.child_id ?? child.id ?? child.uuid
+  }
+
+  function getChildName(child) {
+    return child.full_name ?? child.name ?? [child.last_name, child.first_name, child.middle_name].filter(Boolean).join(" ")
+  }
+
   return (
     <div className="card-body">
       <div className="mb-4 text-center">
@@ -87,6 +96,26 @@ export function CertificateForm({current, setCurrent, orders, sendRequest, depar
           обновится.
         </p>
       </div>
+
+      <fieldset className="fieldset mt-4">
+        <legend className="fieldset-legend text-base font-semibold">Ребёнок</legend>
+        <select
+          value={selectedChildId}
+          onChange={(event) => setSelectedChildId(event.target.value)}
+          className="select select-bordered w-full bg-base-100"
+          disabled={childrenLoading || children.length === 0}
+        >
+          <option value="">{childrenLoading ? "Загрузка..." : "Выберите ребёнка"}</option>
+          {children.map((child) => {
+            const childId = getChildId(child)
+            return <option key={childId} value={childId}>{getChildName(child) || childId}</option>
+          })}
+        </select>
+        {childrenError && <p className="mt-1 text-sm text-error">{childrenError}</p>}
+        {!childrenLoading && !childrenError && children.length === 0 && (
+          <p className="mt-1 text-sm opacity-60">Дети не найдены</p>
+        )}
+      </fieldset>
 
       {!isHostel ? (
         <>
@@ -115,7 +144,7 @@ export function CertificateForm({current, setCurrent, orders, sendRequest, depar
 
       {/* Кнопка заказа справки */}
       <div className="mt-3">
-        <SendButton onClick={handleSend} disabled={!isDataValid(formData, orderFieldsByLabel, current) || isSending} />
+        <SendButton onClick={handleSend} disabled={!selectedChildId || !isDataValid(formData, orderFieldsByLabel, current) || isSending} />
         {submitStatus === 'success' && (
           <div className="mt-2 text-sm text-primary">Заявка успешно отправлена</div>
         )}
@@ -142,10 +171,16 @@ export function CertificateForm({current, setCurrent, orders, sendRequest, depar
 
       {/* Список заявок */}
       <ul className="list rounded-box border border-base-300 bg-base-100 px-4">
-        {orders.length === 0 && (
+        {ordersLoading && (
+          <li className="flex items-center justify-center gap-2 py-4 text-sm opacity-70">
+            <span className="loading loading-spinner loading-sm text-primary" />
+            Загрузка заявок...
+          </li>
+        )}
+        {!ordersLoading && orders.length === 0 && (
           <li className="py-3 text-sm opacity-60">Заявок пока нет</li>
         )}
-        {orders.map((order, idx) => (
+        {!ordersLoading && orders.map((order, idx) => (
           <Order
             key={order.id ?? idx}
             className="animate-list-item"
