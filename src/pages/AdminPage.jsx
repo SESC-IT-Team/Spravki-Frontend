@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import {Link, useNavigate} from "react-router-dom";
-import { useAuth, useAuthFetch } from "auth-lib";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { LogoutButton, useAuth, useAuthFetch } from "auth-lib";
 import { certificateConfigs } from "./configs";
 import { API_BASE } from "../auth/authConfig";
 
@@ -42,7 +42,7 @@ const fieldMap = {
 }
 
 /* Таблица для отображения заявок */
-function AdminTable({ data, department }) {
+function AdminTable({ data, department, ordersLoading }) {
 
   /* Функция для запроса при скачивании справки */
   async function sendDownloadRequest(orderId) {
@@ -82,7 +82,13 @@ function AdminTable({ data, department }) {
 
         {/* body */}
         <tbody>
-          {Array.isArray(data) && data.length > 0 ? (
+          {ordersLoading ? (
+            <tr>
+              <td colSpan={tableHeaders[department]?.length} className="py-6 text-center">
+                <span className="loading loading-spinner loading-md text-primary" />
+              </td>
+            </tr>
+          ) : Array.isArray(data) && data.length > 0 ? (
             data.map((req, idx) => (
               <tr key={req.id} className="animate-list-item" style={{ animationDelay: `${idx * 60}ms` }}>
                 {tableHeaders[department]?.map((header) => (
@@ -120,19 +126,20 @@ function AdminTable({ data, department }) {
 
 export default function AdminPage({ department }) {
   const [ data, setData ] = useState([])
+  const [ ordersLoading, setOrdersLoading ] = useState(true)
   const authFetch = useAuthFetch()
   const { logout } = useAuth()
+  const location = useLocation()
   const navigate = useNavigate()
+  const currentUrl = `${location.pathname}${location.search}${location.hash}`
 
   useEffect(() => {
     async function fetchData() {
+      setOrdersLoading(true)
+
       try {
-        const response = await authFetch(`${API_BASE}/get_orders`, {
-          method: "POST",
-          body: JSON.stringify({
-            filter: "date_desc",
-            department: department
-          }),
+        const response = await authFetch(`${API_BASE}/orders?department=${department}&filter=date_desc`, {
+          method: "GET",
         })
 
         if (response.ok) {
@@ -140,40 +147,33 @@ export default function AdminPage({ department }) {
           setData(fetched_data)
         } else if (response.status === 401) {
           await logout()
-          navigate("/spravki/edu")
+          navigate(currentUrl)
         } else {
           console.error("Ошибка получения данных, status:", response.status);
         }
 
       } catch (error) {
         console.error("Ошибка получения данных:", error);
+      } finally {
+        setOrdersLoading(false)
       }
     }
 
     fetchData()
   }, [department, authFetch, logout, navigate])
 
-  async function handleLogout() {
-    try {
-      await logout()
-      navigate("/spravki/edu")
-    } catch (error) {
-      console.error("Ошибка logout:", error)
-    }
-  }
-
 return (
   <div className="min-h-screen bg-base-200 px-4 py-8 sm:px-6">
     <div className="mx-auto w-full max-w-4xl">
       <div className="flex justify-end mb-2">
-        <button className="btn btn-soft btn-error" onClick={() => handleLogout()}>Выйти</button>
+        <LogoutButton className="btn btn-soft btn-error" redirectTo={currentUrl}>Выйти</LogoutButton>
       </div>
       <div className="card border border-primary/20 bg-base-100 shadow-xl">
         <div className="card-body">
           <div className="mb-4 text-center">
             <h1 className="text-3xl font-bold text-primary sm:text-4xl">{mainHeaders[department]}</h1>
           </div>
-          <AdminTable data={data} department={department}/>
+          <AdminTable data={data} department={department} ordersLoading={ordersLoading}/>
         </div>
       </div>
     </div>
