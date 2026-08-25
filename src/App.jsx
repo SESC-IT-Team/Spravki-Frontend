@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom'
+import { Navigate, Routes, Route } from 'react-router-dom'
 import {EducationalPage, CSDPage, HostelPage} from './pages/UserPages'
 import AdminPage from './pages/AdminPage'
 import RequireAuth from './auth/RequireAuth'
@@ -9,6 +9,7 @@ export default function App() {
   return (
     <AuthProvider config={authConfig}>
       <Routes>
+        <Route path="/" element={<Navigate to="/edu" replace />} />
         <Route path="/auth/callback" element={
           <AuthCallback fallbackPath="/edu" />
         } />
