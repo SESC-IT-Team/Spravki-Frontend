@@ -1,6 +1,7 @@
 import { AUTH_SCOPES } from "auth-lib"
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? ""
+const runtimeEnv = globalThis.__ENV__ ?? {}
+const API_BASE_URL = runtimeEnv.VITE_API_BASE_URL ?? import.meta.env.VITE_API_BASE_URL ?? ""
 
 export const authConfig = {
   baseUrl: API_BASE_URL.replace(/\/+$/, ""),
