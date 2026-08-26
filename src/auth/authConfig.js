@@ -5,7 +5,7 @@ const API_BASE_URL = runtimeEnv.VITE_API_BASE_URL ?? import.meta.env.VITE_API_BA
 
 export const authConfig = {
   baseUrl: API_BASE_URL.replace(/\/+$/, ""),
-  authPath: "/api/auth",
+  authPath: "/auth",
   scope: [
     AUTH_SCOPES.openid,
     AUTH_SCOPES.profile,
@@ -17,4 +17,4 @@ export const authConfig = {
   ],
 }
 
-export const API_BASE = authConfig.baseUrl + '/api'
+export const API_BASE = authConfig.baseUrl
