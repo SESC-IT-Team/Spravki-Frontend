@@ -22,7 +22,7 @@ export const certificateConfigs = [
   ] },
   { apiType: "Hostel", label: "Общежитие", department: "dormitory", departmentLabel: "Общежитие", fields: [
     { formLabel: "ФИО Ученика", key: "child_name", input_type: "text" },
-    { formLabel: "Цель/Причина", key: "purnope", input_type: "text" },
+    { formLabel: "Цель/Причина", key: "purpose", input_type: "text" },
     { formLabel: "Место(Адрес) Пребывания", key: "address", input_type: "text" },
     { formLabel: "Контактное лицо в месте пребывания(ФИО)", key: "contact_person", input_type: "text" },
     { formLabel: "Контактное лицо в месте пребывания(телефон)", key: "phone", input_type: "text" },
