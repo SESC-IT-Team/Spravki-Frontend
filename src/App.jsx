@@ -2,12 +2,10 @@ import { Navigate, Routes, Route } from 'react-router-dom'
 import {EducationalPage, CSDPage, HostelPage} from './pages/UserPages'
 import AdminPage from './pages/AdminPage'
 import RequireAuth from './auth/RequireAuth'
-import { AuthCallback, AuthProvider } from 'auth-lib'
-import { authConfig } from './auth/authConfig'
+import { AuthCallback } from 'auth-lib'
 
 export default function App() {
   return (
-    <AuthProvider config={authConfig}>
       <Routes>
         <Route path="/" element={<Navigate to="/edu" replace />} />
         <Route path="/auth/callback" element={
@@ -20,6 +18,5 @@ export default function App() {
         <Route path="/csd" element={<RequireAuth><CSDPage /></RequireAuth>}/>
         <Route path="/hostel" element={<RequireAuth><HostelPage /></RequireAuth>}/>
       </Routes>
-    </AuthProvider>
   )
 }

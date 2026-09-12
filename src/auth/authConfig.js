@@ -2,6 +2,7 @@ import { AUTH_SCOPES } from "auth-lib"
 
 const runtimeEnv = globalThis.__ENV__ ?? {}
 const API_BASE_URL = runtimeEnv.VITE_API_BASE_URL ?? import.meta.env.VITE_API_BASE_URL ?? ""
+const AUTH_END_SESSION_URL_RAW = runtimeEnv.VITE_AUTH_END_SESSION_URL ?? import.meta.env.VITE_AUTH_END_SESSION_URL ?? ""
 
 export const authConfig = {
   baseUrl: API_BASE_URL.replace(/\/+$/, ""),
@@ -18,3 +19,4 @@ export const authConfig = {
 }
 
 export const API_BASE = authConfig.baseUrl
+export const AUTH_END_SESSION_URL = AUTH_END_SESSION_URL_RAW.trim().replace(/\/+$/, "")

@@ -61,7 +61,6 @@ web_modules/
 
 # Output of 'npm pack'
 *.tgz
-!auth-lib-0.1.0.tgz
 
 # Yarn Integrity file
 .yarn-integrity

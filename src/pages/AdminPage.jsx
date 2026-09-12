@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { LogoutButton, useAuth, useAuthFetch } from "auth-lib";
 import { certificateConfigs } from "./configs";
-import { API_BASE } from "../auth/authConfig";
+import { API_BASE, AUTH_END_SESSION_URL } from "../auth/authConfig";
 
 /* ФУНКЦИЯ ИЗ ДРУГОГО ФАЙЛА, НАДО СДЕЛАТЬ ЕЕ ИМПОРТ */
 function formatOrderDate(dateRaw) {
@@ -166,7 +166,15 @@ return (
   <div className="min-h-screen bg-base-200 px-4 py-8 sm:px-6">
     <div className="mx-auto w-full max-w-4xl">
       <div className="flex justify-end mb-2">
-        <LogoutButton className="btn btn-soft btn-error" redirectTo={currentUrl}>Выйти</LogoutButton>
+        <LogoutButton
+          className="btn btn-soft btn-error"
+          redirectTo={currentUrl}
+          federated={Boolean(AUTH_END_SESSION_URL)}
+          endSessionUrl={AUTH_END_SESSION_URL || undefined}
+          postLogoutRedirectUri={`${window.location.origin}${currentUrl}`}
+        >
+          Выйти
+        </LogoutButton>
       </div>
       <div className="card border border-primary/20 bg-base-100 shadow-xl">
         <div className="card-body">

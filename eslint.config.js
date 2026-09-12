@@ -5,7 +5,7 @@ import reactRefresh from 'eslint-plugin-react-refresh'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist', '.auth-lib-tmp', 'auth-lib-0.1.0.tgz']),
+  globalIgnores(['dist', '.auth-lib-tmp']),
   {
     files: ['**/*.{js,jsx}'],
     extends: [
